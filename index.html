@@ -1,0 +1,3515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YKY's Y2K Planet</title>
+    <!-- 引入像素字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ================= 基础配置 & 变量 ================= */
+        /* 正格点黑 16：16px 中文点阵黑体（SIL OFL，可商用），中文走此字体 */
+        @font-face {
+            font-family: 'ZhengGeDianHei 16';
+            src: url('ZhengGeDianHei-16.woff2') format('woff2'),
+                url('ZhengGeDianHei-16.ttf') format('truetype');
+            font-display: swap;
+            size-adjust: 125%;
+        }
+
+        :root {
+            --pink-bg: #fca5d8;
+            --pink-main: #ff7ebb;
+            --pink-light: #ffd3ec;
+            --pink-dark: #d64082;
+            --win-blue: #4a68a8;
+            --win-grey: #c0c0c0;
+            --win-dark-grey: #808080;
+            --win-black: #111111;
+            --text-pink: #ff1493;
+            --mystic-purple: #2a1b3d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            font-family: 'Press Start 2P', 'ZhengGeDianHei 16', 'Courier New', monospace;
+            image-rendering: pixelated;
+        }
+
+        /* ================= 自定义百合花鼠标（强制，不回退系统光标） ================= */
+        html,
+        body,
+        *,
+        *::before,
+        *::after {
+            cursor: none !important;
+        }
+
+        #lily-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 48px;
+            height: 44px;
+            pointer-events: none;
+            z-index: 2147483647;
+            transform: translate3d(-100px, -100px, 0) translate(-24px, -22px);
+            will-change: transform;
+            transition: opacity 0.15s;
+        }
+
+        #lily-cursor img {
+            width: 48px;
+            height: 44px;
+            display: block;
+            image-rendering: auto;
+            transform: scale(1);
+            transition: transform 0.08s ease-out;
+        }
+
+        #lily-cursor.pressed img {
+            transform: scale(0.82);
+        }
+
+        #lily-cursor.hidden-cursor {
+            opacity: 0;
+        }
+
+        body {
+            background-color: var(--pink-bg);
+            background-image:
+                linear-gradient(rgba(255, 182, 193, 0.4) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 182, 193, 0.4) 1px, transparent 1px),
+                radial-gradient(circle at 50% 50%, #ffc0cb 0%, #fca5d8 100%);
+            background-size: 20px 20px, 20px 20px, 100% 100%;
+            height: 100vh;
+            overflow: hidden;
+            color: #333;
+            position: relative;
+        }
+
+        /* ================= 动态万花筒背景（仅主页显示） ================= */
+        #kaleidoscope-bg,
+        #cargo-kaleidoscope-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 1;
+            transition: opacity 0.55s ease;
+            will-change: opacity;
+            image-rendering: auto;
+        }
+
+        /* ================= 像素波浪过渡动画 ================= */
+        #transition-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+
+        .pixel {
+            position: absolute;
+            background: #ff9fd1;
+            opacity: 0;
+            animation: pixel-fade .3s forwards;
+        }
+
+        @keyframes pixel-fade {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* ================= 视图容器 & 通用 ================= */
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            padding: 20px;
+            z-index: 1;
+        }
+
+        .page.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        /* ================= 页面 1：主页 ================= */
+        #page-1 {
+            justify-content: space-around;
+            align-items: center;
+            flex-direction: row;
+        }
+
+        .planet-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            position: relative;
+            width: 300px;
+            height: 300px;
+            justify-content: center;
+        }
+
+        .planet-container:hover {
+            transform: scale(1.08);
+        }
+
+        /* 修复：前后星环与星球的立体层级 */
+        .planet-wrapper {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            animation: float-main 4s ease-in-out infinite;
+        }
+
+        .pixel-planet {
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle at 30% 30%, #ffb6c1, #ff1493);
+            border-radius: 50%;
+            box-shadow:
+                inset -10px -10px 0px #b80058,
+                0 0 20px rgba(255, 20, 147, 0.6);
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            /* 居于后环与前环之间 */
+        }
+
+        /* 星环通用基础基础样式 */
+        .planet-ring-back,
+        .planet-ring-front {
+            position: absolute;
+            width: 240px;
+            height: 40px;
+            border: 8px solid #a3c2f0;
+            border-radius: 50%;
+            top: 70px;
+            left: -30px;
+            transform: rotate(-15deg);
+            box-shadow: 0 4px 0 #4a68a8;
+        }
+
+        /* 后星环：处于星球后方，只显示上半部分 */
+        .planet-ring-back {
+            z-index: 1;
+            clip-path: polygon(0 0, 100% 0, 100% 50%, 0 50%);
+        }
+
+        /* 前星环：处于星球前方，只显示下半部分，覆盖星球正面 */
+        .planet-ring-front {
+            z-index: 3;
+            clip-path: polygon(0 50%, 100% 50%, 100% 100%, 0 100%);
+        }
+
+        .planet-hint {
+            margin-top: 25px;
+            color: #fff;
+            text-shadow: 2px 2px #d64082;
+            font-size: 14px;
+            animation: blink 1.2s infinite;
+        }
+
+        /* ================= 参考图样式：像素星星组 ================= */
+        .star-element {
+            position: absolute;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .pixel-star-pink {
+            width: 32px;
+            height: 32px;
+            background:
+                radial-gradient(circle, #ffffff 25%, transparent 26%),
+                linear-gradient(to right, transparent 40%, #ffbfe3 40%, #ff4fa8 46%, #ff4fa8 54%, #ffbfe3 60%, transparent 60%),
+                linear-gradient(to bottom, transparent 40%, #ffbfe3 40%, #ff4fa8 46%, #ff4fa8 54%, #ffbfe3 60%, transparent 60%),
+                linear-gradient(to right, transparent 47%, #ffe6f3 47%, #ffe6f3 53%, transparent 53%),
+                linear-gradient(to bottom, transparent 47%, #ffe6f3 47%, #ffe6f3 53%, transparent 53%);
+            filter: drop-shadow(0 0 5px #ff7ebb);
+            animation: star-twinkle 2s infinite ease-in-out;
+        }
+
+        .pixel-star-ring {
+            width: 16px;
+            height: 16px;
+            background: #aab2ff;
+            clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%,
+                    0% 25%, 25% 25%, 25% 75%, 75% 75%, 75% 25%, 0% 25%);
+            box-shadow: 0 0 4px #aab2ff;
+            animation: star-twinkle 2.4s infinite ease-in-out;
+        }
+
+        .pixel-star-cross {
+            width: 16px;
+            height: 16px;
+            background:
+                linear-gradient(to right, transparent 33%, #aab2ff 33%, #aab2ff 66%, transparent 66%),
+                linear-gradient(to bottom, transparent 33%, #aab2ff 33%, #aab2ff 66%, transparent 66%);
+            box-shadow: 0 0 4px #c2c8ff;
+            animation: star-twinkle 1.8s infinite ease-in-out;
+        }
+
+        .pixel-diamond {
+            width: 7px;
+            height: 7px;
+            background-color: #e6e6e6;
+            transform: rotate(45deg);
+            box-shadow: 0 0 3px #ffffff;
+            animation: star-twinkle 1.5s infinite ease-in-out;
+        }
+
+        .pos-top-left {
+            top: 0px;
+            left: 10px;
+        }
+
+        .pos-top-right {
+            top: 15px;
+            right: 15px;
+        }
+
+        .pos-bottom-left {
+            bottom: 35px;
+            left: 0px;
+        }
+
+        .pos-bottom-right {
+            bottom: 25px;
+            right: 10px;
+        }
+
+        .pos-top-mid {
+            top: -20px;
+            left: 45%;
+        }
+
+        .pos-bottom-mid {
+            bottom: 10px;
+            left: 50%;
+        }
+
+        .pos-left-mid {
+            top: 40%;
+            left: -25px;
+        }
+
+        .pos-right-mid {
+            top: 45%;
+            right: -25px;
+        }
+
+        .delay-1 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-2 {
+            animation-delay: 0.6s;
+        }
+
+        .delay-3 {
+            animation-delay: 1.0s;
+        }
+
+        .delay-4 {
+            animation-delay: 1.4s;
+        }
+
+        @keyframes star-twinkle {
+
+            0%,
+            100% {
+                transform: scale(0.4);
+                opacity: 0.3;
+            }
+
+            50% {
+                transform: scale(1.15);
+                opacity: 1;
+            }
+        }
+
+        /* 右侧：个人简介卡片 */
+        .profile-card {
+            display: flex;
+            gap: 15px;
+            background: var(--win-grey);
+            padding: 12px;
+            border: 3px solid #fff;
+            border-right-color: var(--win-black);
+            border-bottom-color: var(--win-black);
+            box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.3);
+        }
+
+        .paint-avatar-box {
+            width: 160px;
+            background: var(--win-grey);
+            border: 2px solid #fff;
+            border-right-color: var(--win-dark-grey);
+            border-bottom-color: var(--win-dark-grey);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .win-title-bar {
+            background: linear-gradient(90deg, var(--win-blue), #8a9bbd);
+            color: white;
+            padding: 3px 5px;
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .win-title-bar .buttons span {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            background: var(--win-grey);
+            border: 1px solid #fff;
+            border-right-color: #000;
+            border-bottom-color: #000;
+            font-size: 9px;
+            text-align: center;
+            line-height: 8px;
+            color: #000;
+        }
+
+        .paint-body {
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: #d4d0c8;
+        }
+
+        .avatar-img-wrapper {
+            width: 100%;
+            height: 130px;
+            background: #fff;
+            border: 2px solid var(--win-dark-grey);
+            border-right-color: #fff;
+            border-bottom-color: #fff;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .avatar-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #p1-avatar {
+            cursor: pointer;
+            transition: transform 0.25s ease, filter 0.25s ease;
+        }
+
+        #p1-avatar:hover {
+            transform: scale(1.06);
+            filter: drop-shadow(0 0 10px var(--pink-light, #ff9ec7));
+        }
+
+        /* 点击瞬间：白光一闪 */
+        #p1-avatar.flash {
+            animation: avatar-flash 0.5s ease-out;
+        }
+
+        @keyframes avatar-flash {
+            0% {
+                filter: brightness(1) drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+            }
+
+            25% {
+                filter: brightness(1.8) drop-shadow(0 0 18px rgba(255, 255, 255, 0.95));
+            }
+
+            100% {
+                filter: brightness(1) drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+            }
+        }
+
+        .notepad-box {
+            width: 240px;
+            background: #fff;
+            border: 2px solid var(--win-dark-grey);
+            border-right-color: #fff;
+            border-bottom-color: #fff;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .notepad-header {
+            background: var(--pink-main);
+            color: white;
+            padding: 3px 6px;
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .notepad-menu {
+            background: var(--win-grey);
+            font-size: 10px;
+            padding: 2px 4px;
+            border-bottom: 1px solid var(--win-dark-grey);
+            display: flex;
+            gap: 8px;
+        }
+
+        .notepad-content {
+            padding: 12px;
+            color: var(--text-pink);
+            font-size: 13px;
+            line-height: 1.8;
+            font-weight: bold;
+            word-break: break-all;
+        }
+
+        /* ================= 页面 2：四向导航页 ================= */
+        #page-2 {
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #ripple-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .chest-container {
+            position: relative;
+            z-index: 5;
+        }
+
+        .nav-center {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+        }
+
+        /* 新增：设置 drop-shadow 为图片轮廓赋予辉光发光效果 */
+        .center-planet {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: url('pink.png') no-repeat center / contain;
+            z-index: 2;
+            animation: float-nav 4s ease-in-out infinite;
+            filter: drop-shadow(0 0 15px rgba(250, 230, 240, 0.9)) drop-shadow(0 0 30px rgba(241, 208, 224, 0.655)) drop-shadow(0 0 50px rgba(255, 183, 214, 0.633));
+            pointer-events: none;
+        }
+
+        .nav-node {
+            position: absolute;
+            background: #fff;
+            border: 3px solid var(--pink-dark);
+            padding: 10px 15px;
+            font-size: 12px;
+            color: var(--pink-dark);
+            cursor: pointer;
+            box-shadow: 4px 4px 0px var(--mystic-purple);
+            transition: all 0.2s;
+            z-index: 10;
+        }
+
+        .nav-node:hover {
+            background: var(--pink-light);
+            transform: scale(1.1);
+        }
+
+        .node-top {
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .node-bottom {
+            bottom: 37px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .node-left {
+            left: -43px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .node-right {
+            right: -40px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .line-v,
+        .line-h {
+            position: absolute;
+            background: repeating-linear-gradient(0deg, var(--pink-dark), var(--pink-dark) 5px, transparent 5px, transparent 10px);
+            z-index: 1;
+        }
+
+        .line-v {
+            width: 3px;
+            height: 360px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .line-h {
+            height: 3px;
+            width: 360px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: repeating-linear-gradient(90deg, var(--pink-dark), var(--pink-dark) 5px, transparent 5px, transparent 10px);
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: var(--win-grey);
+            border: 2px solid #fff;
+            border-right-color: #000;
+            border-bottom-color: #000;
+            padding: 6px 12px;
+            font-size: 11px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        /* ================= 页面 4：My Works 3D 空间陈列页 ================= */
+        #page-4 {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #works-3d-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        #works-3d-container canvas {
+            display: block;
+        }
+
+        .works-overlay {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            pointer-events: none;
+        }
+
+        .works-title {
+            color: #fff;
+            font-size: 22px;
+            text-shadow: 3px 3px var(--mystic-purple), 0 0 20px rgba(255, 192, 222, 0.5);
+            letter-spacing: 4px;
+        }
+
+        .works-grid {
+            display: flex;
+            gap: clamp(20px, 4vw, 60px);
+            align-items: flex-end;
+            perspective: 800px;
+            pointer-events: auto;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 0 20px;
+        }
+
+        /* 3D 书本 */
+        .work-book {
+            position: relative;
+            width: clamp(80px, 12vw, 140px);
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .work-book:hover {
+            transform: translateY(-16px) scale(1.12);
+        }
+
+        .work-book:hover .book-cover {
+            box-shadow: 0 0 30px rgba(255, 192, 222, 0.8), 0 0 60px rgba(255, 192, 222, 0.4);
+        }
+
+        .book-spine {
+            position: absolute;
+            left: -6px;
+            top: 0;
+            width: 6px;
+            height: 100%;
+            background: linear-gradient(90deg, var(--pink-dark), var(--pink-light));
+            border-radius: 2px 0 0 2px;
+            transform: rotateY(-15deg) translateZ(-3px);
+            box-shadow: -2px 0 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .book-cover {
+            width: 100%;
+            aspect-ratio: 5/7;
+            height: auto;
+            border: 3px solid #fff;
+            border-right-color: var(--pink-dark);
+            border-bottom-color: var(--pink-dark);
+            box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: relative;
+            background: var(--pink-light);
+            transition: box-shadow 0.35s;
+        }
+
+        .book-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .book-cover .book-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: var(--pink-dark);
+            text-align: center;
+            padding: 5px;
+            line-height: 1.4;
+        }
+
+        .book-cover .book-emoji-cover {
+            font-size: clamp(32px, 5vw, 56px);
+            background: linear-gradient(135deg, var(--pink-dark), var(--pink-light));
+            line-height: 1;
+        }
+
+        .book-title {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 10px;
+            color: #fff;
+            text-shadow: 2px 2px var(--mystic-purple);
+            letter-spacing: 0.5px;
+            word-break: normal;
+            overflow-wrap: normal;
+            line-height: 1.35;
+            min-height: 27px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ripple-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* 页面 3 & 5 & 6 & 7 & 8 & 9 的抽屉页样式 */
+        #page-3,
+        #page-5,
+        #page-6,
+        #page-7,
+        #page-8,
+        #page-9 {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ================= 页面 3：证明记录与复盘（3D 空间 + 像素图标） ================= */
+        #proof-3d-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        #proof-3d-container canvas {
+            display: block;
+        }
+
+        .proof-overlay {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+            pointer-events: none;
+        }
+
+        .proof-title {
+            color: #fff;
+            font-size: 22px;
+            text-shadow: 3px 3px var(--mystic-purple), 0 0 20px rgba(255, 192, 222, 0.5);
+            letter-spacing: 4px;
+        }
+
+        .proof-grid {
+            display: flex;
+            gap: clamp(30px, 6vw, 80px);
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            pointer-events: auto;
+            padding: 0 20px;
+        }
+
+        .proof-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            cursor: pointer;
+            animation: proof-float 4s ease-in-out infinite;
+        }
+
+        .proof-item:nth-child(2) {
+            animation-delay: -1.3s;
+        }
+
+        .proof-item:nth-child(3) {
+            animation-delay: -2.6s;
+        }
+
+        @keyframes proof-float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-18px);
+            }
+        }
+
+        .proof-item:hover {
+            animation: none;
+        }
+
+        .proof-item:hover .proof-icon {
+            filter: brightness(1.6) drop-shadow(0 0 20px rgba(255, 255, 255, 0.9));
+        }
+
+        .proof-label {
+            font-size: 12px;
+            color: #fff;
+            text-shadow: 2px 2px var(--mystic-purple);
+            letter-spacing: 2px;
+            white-space: nowrap;
+        }
+
+        /* 图标图片（统一尺寸） */
+        .proof-icon {
+            width: 140px;
+            height: 140px;
+            object-fit: contain;
+            image-rendering: pixelated;
+        }
+
+        /* 光盘图标单独缩小 */
+        .proof-icon.cd-icon {
+            width: 112px;
+            height: 112px;
+        }
+
+        /* ================= 页面 5：个人简介与能力说明（电脑弹窗） ================= */
+        #page-5 {
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 4:3 复古电脑弹窗，占画面 80% */
+        .about-window {
+            position: relative;
+            z-index: 5;
+            width: min(80vw, calc(80vh * 4 / 3));
+            aspect-ratio: 4 / 3;
+            background: var(--win-grey);
+            border: 3px solid #fff;
+            border-right-color: var(--win-black);
+            border-bottom-color: var(--win-black);
+            box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.35);
+            display: flex;
+            flex-direction: column;
+            padding: 3px;
+        }
+
+        .about-title-bar {
+            background: linear-gradient(90deg, var(--win-blue), #8a9bbd);
+            color: #fff;
+            padding: 5px 6px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .about-title-bar .win-btns span {
+            display: inline-block;
+            width: 14px;
+            height: 13px;
+            background: var(--win-grey);
+            border: 1px solid #fff;
+            border-right-color: #000;
+            border-bottom-color: #000;
+            font-size: 11px;
+            text-align: center;
+            line-height: 11px;
+            color: #000;
+            margin-left: 2px;
+        }
+
+        /* 可滚动的窗口内容区 */
+        .about-body {
+            flex: 1;
+            margin-top: 3px;
+            background: #d4d0c8;
+            border: 2px solid var(--win-dark-grey);
+            border-right-color: #fff;
+            border-bottom-color: #fff;
+            overflow-y: auto;
+            padding: 16px 18px;
+        }
+
+        .about-body::-webkit-scrollbar {
+            width: 16px;
+        }
+
+        .about-body::-webkit-scrollbar-track {
+            background: #c0c0c0;
+            background-image: repeating-conic-gradient(#c0c0c0 0% 25%, #d4d0c8 0% 50%);
+            background-size: 2px 2px;
+        }
+
+        .about-body::-webkit-scrollbar-thumb {
+            background: var(--win-grey);
+            border: 2px solid #fff;
+            border-right-color: #000;
+            border-bottom-color: #000;
+        }
+
+        /* 顶部：左头像 + 右姓名 */
+        .about-head {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: #fff;
+            border: 2px solid var(--win-dark-grey);
+            border-right-color: #fff;
+            border-bottom-color: #fff;
+            padding: 14px;
+        }
+
+        .about-avatar {
+            width: 130px;
+            height: 130px;
+            flex-shrink: 0;
+            background: #fff;
+            border: 2px solid var(--win-dark-grey);
+            border-right-color: #fff;
+            border-bottom-color: #fff;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .about-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .about-name-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .about-name {
+            font-size: 24px;
+            color: var(--pink-dark);
+            letter-spacing: 2px;
+        }
+
+        .about-subtitle {
+            font-size: 11px;
+            color: var(--win-blue);
+            line-height: 1.8;
+        }
+
+        /* 简介分区（凹陷面板） */
+        .about-section {
+            margin-top: 14px;
+            background: #fff;
+            border: 2px solid var(--win-dark-grey);
+            border-right-color: #fff;
+            border-bottom-color: #fff;
+            padding: 12px 14px;
+        }
+
+        .about-section h3 {
+            font-size: 13px;
+            color: #fff;
+            background: var(--pink-main);
+            display: inline-block;
+            padding: 5px 9px;
+            margin-bottom: 10px;
+            box-shadow: 3px 3px 0 var(--pink-dark);
+        }
+
+        .about-section p,
+        .about-section li {
+            font-size: 12px;
+            color: #444;
+            line-height: 2;
+            list-style: none;
+        }
+
+        .about-section ul {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .about-section li::before {
+            content: "♥ ";
+            color: var(--pink-main);
+        }
+
+        .skill-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .skill-tag {
+            font-size: 11px;
+            color: var(--pink-dark);
+            background: var(--pink-light);
+            border: 2px solid #fff;
+            border-right-color: var(--pink-dark);
+            border-bottom-color: var(--pink-dark);
+            padding: 5px 8px;
+        }
+
+        /* 底部：my favorite list 像素入口 */
+        .favorite-list-box {
+            margin-top: 16px;
+            background: var(--pink-dark);
+            border: 3px solid #fff;
+            border-right-color: #000;
+            border-bottom-color: #000;
+            box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.3);
+            padding: 14px;
+            text-align: center;
+            color: #fff;
+            font-size: 14px;
+            text-shadow: 2px 2px var(--mystic-purple);
+            cursor: pointer;
+            transition: transform 0.15s, background 0.15s;
+        }
+
+        .favorite-list-box:hover {
+            background: var(--pink-main);
+            transform: translate(-2px, -2px);
+            box-shadow: 7px 7px 0px rgba(0, 0, 0, 0.3);
+        }
+
+        .favorite-list-box:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+        }
+
+        .favorite-list-box .fl-sub {
+            display: block;
+            margin-top: 6px;
+            font-size: 10px;
+            color: var(--pink-light);
+            text-shadow: none;
+        }
+
+        .chest-container {
+            width: 380px;
+            background: var(--pink-dark);
+            border: 4px solid #fff;
+            padding: 15px;
+            box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chest-title {
+            color: #fff;
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px var(--mystic-purple);
+        }
+
+        .drawer-layer {
+            background: var(--pink-light);
+            border: 3px solid #fff;
+            border-right-color: var(--pink-dark);
+            border-bottom-color: var(--pink-dark);
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .drawer-layer:hover {
+            background: #fff;
+            transform: translateX(5px);
+        }
+
+        .drawer-handle {
+            width: 40px;
+            height: 10px;
+            background: var(--win-grey);
+            border: 2px solid #fff;
+            border-right-color: #000;
+            border-bottom-color: #000;
+        }
+
+        .drawer-text {
+            font-size: 12px;
+            color: var(--pink-dark);
+            font-weight: bold;
+        }
+
+        /* ================= 页面 7 & 8 & 9：过程证据 / 迭代记录 / 学习复盘（弹窗） ================= */
+        #page-7,
+        #page-8,
+        #page-9 {
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 个人简介/过程证据/迭代记录/学习复盘弹窗内所有文字统一用 ZhengGeDianHei 16（粉色 h3 标题栏除外） */
+        #page-5 .about-body,
+        #page-7 .about-body,
+        #page-8 .about-body,
+        #page-9 .about-body,
+        #page-5 .about-body *:not(h3),
+        #page-7 .about-body *:not(h3),
+        #page-8 .about-body *:not(h3),
+        #page-9 .about-body *:not(h3) {
+            font-family: 'ZhengGeDianHei 16', 'Press Start 2P', 'Courier New', monospace;
+        }
+
+        /* 头像介绍栏、工具技能栏、MY FAVORITE LIST、附录box 保持原字体 */
+        #page-5 .about-body .about-head,
+        #page-5 .about-body .about-head *,
+        #page-5 .about-body .skill-tags,
+        #page-5 .about-body .skill-tags *,
+        #page-5 .about-body .favorite-list-box,
+        #page-5 .about-body .favorite-list-box *,
+        #page-7 .about-body .appendix-box,
+        #page-7 .about-body .appendix-box * {
+            font-family: 'Press Start 2P', 'ZhengGeDianHei 16', 'Courier New', monospace !important;
+        }
+
+        .appendix-box {
+            margin-top: 16px;
+            background: var(--pink-dark);
+            border: 3px solid #fff;
+            border-right-color: #000;
+            border-bottom-color: #000;
+            box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.3);
+            padding: 14px;
+            text-align: center;
+            color: #fff;
+            font-size: 14px;
+            text-shadow: 2px 2px var(--mystic-purple);
+            cursor: pointer;
+            transition: transform 0.15s, background 0.15s;
+        }
+
+        .appendix-box:hover {
+            background: var(--pink-main);
+            transform: translate(-2px, -2px);
+            box-shadow: 7px 7px 0px rgba(0, 0, 0, 0.3);
+        }
+
+        .appendix-box:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+        }
+
+        .appendix-box .ap-sub {
+            display: block;
+            margin-top: 6px;
+            font-size: 10px;
+            color: var(--pink-light);
+            text-shadow: none;
+        }
+
+        /* 附录粉色弹窗 */
+        .appendix-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9000;
+        }
+
+        .appendix-overlay.active {
+            display: flex;
+        }
+
+        .appendix-popup {
+            width: 360px;
+            max-height: 92vh;
+            background: var(--pink-light);
+            border: 3px solid #fff;
+            border-right-color: var(--pink-dark);
+            border-bottom-color: var(--pink-dark);
+            box-shadow: 8px 8px 0px #000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .appendix-popup-header {
+            background: linear-gradient(90deg, #ff69b4, #ff1493);
+            padding: 4px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+            font-size: 11px;
+        }
+
+        .appendix-popup-body {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #ffe8f5;
+            overflow-y: auto;
+        }
+
+        .appendix-intro {
+            font-size: 11px;
+            color: #fff;
+            line-height: 1.8;
+            text-align: center;
+            padding: 10px 8px;
+            background: var(--pink-main);
+            border: 2px solid #fff;
+            text-shadow: 1px 1px var(--pink-dark);
+        }
+
+        .doc-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #fff;
+            border: 2px solid var(--pink-main);
+            padding: 10px 12px;
+            font-size: 11px;
+            color: var(--pink-dark);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            line-height: 1.6;
+        }
+
+        .doc-link:hover {
+            background: var(--pink-light);
+            transform: translateX(4px);
+        }
+
+        .doc-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .doc-info {
+            flex: 1;
+        }
+
+        .doc-name {
+            font-weight: bold;
+            color: var(--pink-dark);
+        }
+
+        .doc-format {
+            font-size: 10px;
+            color: #888;
+        }
+
+        /* ================= 文档在线预览弹窗 ================= */
+        .doc-preview-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9500;
+        }
+
+        .doc-preview-overlay.active {
+            display: flex;
+        }
+
+        .doc-preview-window {
+            width: min(85vw, 900px);
+            height: 85vh;
+            background: var(--pink-light);
+            border: 3px solid #fff;
+            border-right-color: var(--pink-dark);
+            border-bottom-color: var(--pink-dark);
+            box-shadow: 8px 8px 0px #000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .doc-preview-header {
+            background: linear-gradient(90deg, #ff69b4, #ff1493);
+            padding: 6px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .doc-preview-body {
+            flex: 1;
+            padding: 20px 28px;
+            background: #fff;
+            overflow-y: auto;
+            color: #333;
+            line-height: 1.8;
+            font-family: 'ZhengGeDianHei 16', 'Press Start 2P', 'Courier New', monospace;
+        }
+
+        .doc-preview-body *:not(h1):not(h2):not(h3) {
+            font-family: 'ZhengGeDianHei 16', 'Press Start 2P', 'Courier New', monospace;
+        }
+
+        .doc-preview-body::-webkit-scrollbar {
+            width: 14px;
+        }
+
+        .doc-preview-body::-webkit-scrollbar-track {
+            background: #ffe8f5;
+        }
+
+        .doc-preview-body::-webkit-scrollbar-thumb {
+            background: var(--pink-main);
+            border: 2px solid #fff;
+        }
+
+        .doc-loading {
+            text-align: center;
+            color: var(--pink-dark);
+            padding: 40px 0;
+            font-size: 14px;
+        }
+
+        /* 预览内容内的 Markdown 渲染样式 */
+        .doc-preview-body h1 {
+            font-size: 22px;
+            color: var(--pink-dark);
+            border-bottom: 3px solid var(--pink-main);
+            padding-bottom: 8px;
+            margin: 16px 0 12px;
+        }
+
+        .doc-preview-body h2 {
+            font-size: 17px;
+            color: var(--pink-dark);
+            margin: 18px 0 10px;
+            padding-left: 10px;
+            border-left: 5px solid var(--pink-main);
+        }
+
+        .doc-preview-body h3 {
+            font-size: 15px;
+            color: #d64082;
+            margin: 14px 0 8px;
+        }
+
+        .doc-preview-body p {
+            margin: 8px 0;
+            color: #444;
+        }
+
+        .doc-preview-body ul,
+        .doc-preview-body ol {
+            margin: 8px 0;
+            padding-left: 24px;
+        }
+
+        .doc-preview-body li {
+            margin: 4px 0;
+        }
+
+        .doc-preview-body table {
+            border-collapse: collapse;
+            margin: 12px 0;
+            width: 100%;
+            font-size: 12px;
+        }
+
+        .doc-preview-body th,
+        .doc-preview-body td {
+            border: 2px solid var(--pink-main);
+            padding: 8px 10px;
+            text-align: left;
+        }
+
+        .doc-preview-body th {
+            background: var(--pink-light);
+            color: var(--pink-dark);
+        }
+
+        .doc-preview-body tr:nth-child(even) td {
+            background: #fff5fb;
+        }
+
+        .doc-preview-body code {
+            background: #ffe8f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            color: var(--pink-dark);
+        }
+
+        .doc-preview-body pre {
+            background: #2a1b3d;
+            color: #ffd3ec;
+            padding: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .doc-preview-body pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        .doc-preview-body blockquote {
+            border-left: 4px solid var(--pink-main);
+            margin: 10px 0;
+            padding: 4px 12px;
+            color: #666;
+            background: #fff5fb;
+        }
+
+        .doc-preview-body a {
+            color: var(--pink-dark);
+            text-decoration: underline;
+        }
+
+        /* mammoth 转换的 docx 表格样式 */
+        .doc-preview-body table.docx-table {
+            border-collapse: collapse;
+        }
+
+        .doc-preview-body table.docx-table th,
+        .doc-preview-body table.docx-table td {
+            border: 1px solid var(--pink-dark);
+            padding: 6px 10px;
+        }
+
+        /* ================= 通用弹窗 ================= */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 8000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .nostalgia-window {
+            width: 360px;
+            max-height: 92vh;
+            background: var(--pink-light);
+            border: 3px solid #fff;
+            border-right-color: var(--pink-dark);
+            border-bottom-color: var(--pink-dark);
+            box-shadow: 8px 8px 0px #000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nostalgia-header {
+            background: linear-gradient(90deg, #ff69b4, #ff1493);
+            padding: 4px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+            font-size: 11px;
+        }
+
+        .nostalgia-controls {
+            display: flex;
+            gap: 3px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .dot-red {
+            background: #ff5f56;
+        }
+
+        .dot-yellow {
+            background: #ffbd2e;
+        }
+
+        .dot-green {
+            background: #27c93f;
+        }
+
+        .nostalgia-body {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #ffe8f5;
+            overflow-y: auto;
+        }
+
+        .item-img-frame {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            height: auto;
+            background: #fff;
+            border: 2px solid var(--pink-dark);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .item-img-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .item-img-frame .modal-emoji {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(64px, 18vw, 140px);
+            line-height: 1;
+            background: linear-gradient(135deg, var(--pink-dark), var(--pink-light));
+        }
+
+        .item-desc {
+            background: #fff;
+            border: 2px solid var(--pink-main);
+            padding: 10px;
+            font-size: 11px;
+            color: #333;
+            line-height: 1.6;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .game-link-btn {
+            display: inline-block;
+            margin-top: 5px;
+            color: #ff1493;
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: bold;
+            word-break: break-all;
+            transition: color 0.2s;
+        }
+
+        .game-link-btn:hover {
+            color: #b80058;
+            background: #ffd3ec;
+        }
+
+        @keyframes float-main {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-12px);
+            }
+        }
+
+        @keyframes float-nav {
+
+            0%,
+            100% {
+                transform: translateY(0) scale(1);
+            }
+
+            50% {
+                transform: translateY(-8px) scale(1.03);
+            }
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ================= 自定义百合花鼠标 ================= -->
+    <div id="lily-cursor" class="hidden-cursor"><img src="cursor.png?v=4" alt="" draggable="false"></div>
+    <script>
+        (function () {
+            var cur = document.getElementById('lily-cursor');
+
+            // 1:1 即时跟随，零延迟
+            function move(e) {
+                cur.style.transform =
+                    'translate3d(' + e.clientX + 'px,' + e.clientY + 'px,0) translate(-24px,-22px)';
+                cur.classList.remove('hidden-cursor');
+            }
+            window.addEventListener('pointermove', move, { passive: true, capture: true });
+            window.addEventListener('pointerdown', function () {
+                cur.classList.add('pressed');
+            }, { passive: true, capture: true });
+            window.addEventListener('pointerup', function () {
+                cur.classList.remove('pressed');
+            }, { passive: true, capture: true });
+            // 鼠标移出窗口隐藏，避免停在边缘
+            document.documentElement.addEventListener('mouseleave', function () {
+                cur.classList.add('hidden-cursor');
+            });
+            document.documentElement.addEventListener('mouseenter', function () {
+                cur.classList.remove('hidden-cursor');
+            });
+        })();
+    </script>
+
+    <!-- ================= 动态万花筒背景 ================= -->
+    <canvas id="kaleidoscope-bg"></canvas>
+    <canvas id="cargo-kaleidoscope-bg"></canvas>
+    <script src="cargo-kaleidoscope.js"></script>
+
+    <div id="transition-container"></div>
+
+    <!-- ================= 页面 1：主页 ================= -->
+    <div id="page-1" class="page active">
+        <div class="planet-container" id="enterPlanet" onclick="switchPage(2)">
+
+            <!-- 四周分布的像素星星 -->
+            <div class="star-element pixel-star-pink pos-top-mid delay-1"></div>
+            <div class="star-element pixel-star-cross pos-top-left delay-2"></div>
+            <div class="star-element pixel-diamond pos-left-mid delay-3"></div>
+            <div class="star-element pixel-star-pink pos-bottom-left delay-4"></div>
+            <div class="star-element pixel-star-ring pos-bottom-right delay-1"></div>
+            <div class="star-element pixel-diamond pos-right-mid delay-2"></div>
+            <div class="star-element pixel-star-cross pos-top-right delay-3"></div>
+            <div class="star-element pixel-diamond pos-bottom-mid delay-4"></div>
+
+            <!-- 修改：带有前/后分层星环的星球结构 -->
+            <div class="planet-wrapper">
+                <div class="planet-ring-back"></div>
+                <div class="pixel-planet"></div>
+                <div class="planet-ring-front"></div>
+            </div>
+
+            <div class="planet-hint">[ CLICK PLANET ]</div>
+        </div>
+
+        <!-- 右侧：个人简介卡片 -->
+        <div class="profile-card">
+            <div class="paint-avatar-box">
+                <div class="win-title-bar">
+                    <span>untitled - Paint</span>
+                    <div class="buttons">
+                        <span>-</span><span>x</span>
+                    </div>
+                </div>
+                <div class="paint-body">
+                    <div class="avatar-img-wrapper">
+                        <img src="p1.png" alt="Avatar" id="p1-avatar">
+                    </div>
+                </div>
+            </div>
+
+            <div class="notepad-box">
+                <div class="notepad-header">
+                    <span>♥ - Notepad</span>
+                    <span>X</span>
+                </div>
+                <div class="notepad-menu">
+                    <span>File</span><span>Edit</span><span>Format</span>
+                </div>
+                <div class="notepad-content">
+                    网页的主人：YKY<br><br>
+                    欢迎来到我的星球^v^<br><br>
+                    . ᕀ.𓂋᜔˖ ₊<br>
+                    ˚₊‧꒰ა𛰙᭜𖫴𖫰𖫱𖫳𖫲𖫲𖫳𖫴𖫰𖫱꛰ᩝ︪᭜𖫴𖫰𖫱𖫳𖫲𖫲𖫳𖫴𖫰𖫱꛰ᩝ𛰚໒꒱ ‧₊꙳
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 页面 2：四向导航页 ================= -->
+    <div id="page-2" class="page">
+        <canvas id="ripple-canvas"></canvas>
+        <button class="back-btn" onclick="switchPage(1)">&lt; BACK</button>
+
+        <div class="nav-center">
+            <div class="line-v"></div>
+            <div class="line-h"></div>
+
+            <div class="center-planet"></div>
+
+            <div class="nav-node node-top" onclick="switchPage(3)">证明记录与复盘</div>
+            <div class="nav-node node-right" onclick="switchPage(4)">阶段练习与项目成果</div>
+            <div class="nav-node node-bottom" onclick="alert('即将解锁：标志性成果')">标志性成果</div>
+            <div class="nav-node node-left" onclick="switchPage(5)">个人简介与功能说明</div>
+        </div>
+    </div>
+
+    <!-- ================= 页面 3：My Favorite 抽屉页 ================= -->
+    <div id="page-3" class="page">
+        <div id="proof-3d-container"></div>
+        <button class="back-btn" onclick="switchPage(2)">&lt; BACK</button>
+
+        <div class="proof-overlay">
+            <div class="proof-title">★ PROOF &amp; REFLECTION ★</div>
+            <div class="proof-grid">
+                <div class="proof-item" onclick="switchPage(7)">
+                    <img class="proof-icon" src="文件夹.png" alt="过程证据">
+                    <div class="proof-label">过程证据</div>
+                </div>
+                <div class="proof-item" onclick="switchPage(8)">
+                    <img class="proof-icon cd-icon" src="光盘.png" alt="迭代记录">
+                    <div class="proof-label">迭代记录</div>
+                </div>
+                <div class="proof-item" onclick="switchPage(9)">
+                    <img class="proof-icon" src="文档.png" alt="最终学习复盘">
+                    <div class="proof-label">最终学习复盘</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 页面 4：My Works 3D 空间陈列页 ================= -->
+    <div id="page-4" class="page">
+        <div id="works-3d-container"></div>
+        <button class="back-btn" onclick="switchPage(2)">&lt; BACK</button>
+
+        <div class="works-overlay">
+            <div class="works-title">★ MY WORKS ★</div>
+            <div class="works-grid" id="works-grid">
+                <!-- 5 本书由 JS 动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 页面 5：个人简介与能力说明（复古电脑弹窗） ================= -->
+    <div id="page-5" class="page">
+        <canvas class="ripple-canvas" id="ripple-canvas-5"></canvas>
+        <button class="back-btn" onclick="switchPage(2)">&lt; BACK</button>
+
+        <div class="about-window">
+            <!-- 窗口标题栏 -->
+            <div class="about-title-bar">
+                <span>about_me.exe - 个人简介与能力说明</span>
+                <div class="win-btns"><span>_</span><span>□</span><span>×</span></div>
+            </div>
+
+            <!-- 可滚动内容区 -->
+            <div class="about-body">
+                <!-- 左头像 + 右姓名 -->
+                <div class="about-head">
+                    <div class="about-avatar">
+                        <img src="p1.png" alt="YKY 的头像">
+                    </div>
+                    <div class="about-name-box">
+                        <div class="about-name">YKY</div>
+                        <div class="about-subtitle">
+                            ♡ 欢迎来到我的 Y2K 星球 ♡<br>
+                            HTML5 网页游戏开发者 / 像素风爱好者<br>
+                            武汉理工大学经济学院 · 数字经济2501 · 杨可祎<br>
+                            Student · Web Game Designer
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 个人简介 -->
+                <div class="about-section">
+                    <h3>个人简介 / ABOUT</h3>
+                    <p>
+                        你好呀，我是 YKY！欢迎光临我的复古小星球 ^v^ 我喜欢千禧年前后的互联网美学——像素字体、Windows 98
+                        窗口、粉粉的电子梦幻感。我热衷于把脑子里的奇思妙想做成可以在浏览器里直接玩的互动小游戏和网页，从合成大西瓜到水波纹、万花筒特效，每一个作品都是我认真攒下的小星星。
+                    </p>
+                </div>
+
+                <!-- 学习方向 -->
+                <div class="about-section">
+                    <h3>学习方向 / DIRECTION</h3>
+                    <ul>
+                        <li>HTML5 网页小游戏开发（Canvas 动画、碰撞与物理、游戏循环）</li>
+                        <li>前端页面开发与复古像素风 UI 设计</li>
+                        <li>创意交互动效与生成式视觉（万花筒、水波纹、粒子特效）</li>
+                        <li>游戏玩法策划与 IP 二创（全职猎人 / 弹丸论破 / 银魂 等）</li>
+                    </ul>
+                </div>
+
+                <!-- 工具与技能 -->
+                <div class="about-section">
+                    <h3>工具与技能 / SKILLS</h3>
+                    <div class="skill-tags">
+                        <span class="skill-tag">HTML5</span>
+                        <span class="skill-tag">CSS3</span>
+                        <span class="skill-tag">JavaScript</span>
+                        <span class="skill-tag">Canvas 2D</span>
+                        <span class="skill-tag">像素画</span>
+                        <span class="skill-tag">像素风 UI</span>
+                        <span class="skill-tag">动效设计</span>
+                        <span class="skill-tag">游戏策划</span>
+                    </div>
+                </div>
+
+                <!-- 入口：my favorite list → 原抽屉页 -->
+                <div class="favorite-list-box" onclick="switchPage(6)">
+                    ♡ MY FAVORITE LIST ♡
+                    <span class="fl-sub">>> 点击打开我的最爱抽屉 <<< /span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 页面 6：My Favorite 抽屉收藏盒 ================= -->
+    <div id="page-6" class="page">
+        <canvas class="ripple-canvas" id="ripple-canvas-6"></canvas>
+        <button class="back-btn" onclick="switchPage(5)">&lt; BACK</button>
+
+        <div class="chest-container">
+            <div class="chest-title">♡ MY FAVORITE CHEST ♡</div>
+
+            <div class="drawer-layer" onclick="openDrawer('hobby', 0)">
+                <span class="drawer-text">1. 追星</span>
+                <div class="drawer-handle"></div>
+            </div>
+            <div class="drawer-layer" onclick="openDrawer('hobby', 1)">
+                <span class="drawer-text">2. 看漫画</span>
+                <div class="drawer-handle"></div>
+            </div>
+            <div class="drawer-layer" onclick="openDrawer('hobby', 2)">
+                <span class="drawer-text">3. 追番</span>
+                <div class="drawer-handle"></div>
+            </div>
+            <div class="drawer-layer" onclick="openDrawer('hobby', 3)">
+                <span class="drawer-text">4. 玩二游</span>
+                <div class="drawer-handle"></div>
+            </div>
+            <div class="drawer-layer" onclick="openDrawer('hobby', 4)">
+                <span class="drawer-text">5. 玩端游</span>
+                <div class="drawer-handle"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 页面 7：过程证据（开发文档弹窗） ================= -->
+    <div id="page-7" class="page">
+        <canvas class="ripple-canvas" id="ripple-canvas-7"></canvas>
+        <button class="back-btn" onclick="switchPage(3)">&lt; BACK</button>
+
+        <div class="about-window">
+            <!-- 窗口标题栏 -->
+            <div class="about-title-bar">
+                <span>process_evidence.exe - 过程证据</span>
+                <div class="win-btns"><span>_</span><span>□</span><span>×</span></div>
+            </div>
+
+            <!-- 可滚动内容区 -->
+            <div class="about-body" style="min-height: 0;">
+                <!-- 标题 -->
+                <div class="about-section">
+                    <h3>本网站开发过程 / DEV PROCESS</h3>
+                    <p>以下是 Y2K 个人星球网站从需求到交付的完整开发过程总结，涵盖需求定义、原型设计、提示词策略、版本迭代记录与问题解决过程。完整文档请见底部附录。</p>
+                </div>
+
+                <!-- 1. 需求 -->
+                <div class="about-section">
+                    <h3>1. 需求 / REQUIREMENTS</h3>
+                    <ul>
+                        <li>以 Y2K 美学为核心的单页应用个人网站，纯前端实现（HTML5 + CSS3 + JS + Canvas + Three.js）</li>
+                        <li>7 个功能页面：首页星球、四向导航、证明记录与复盘、阶段练习与项目成果、个人简介、抽屉收藏盒、过程证据</li>
+                        <li>粉色调配色（#fca5d8 / #ff7ebb / #ffd3ec / #d64082）+ 深紫（#2a1b3d）</li>
+                        <li>英文用 Press Start 2P 字体，中文用 ZhengGeDianHei 16 铁素字体</li>
+                        <li>首页头像点击触发中日韩英四语自我介绍朗读（ElevenLabs 狛枝凪斗音色）</li>
+                        <li>万花筒、水波纹、3D 波浪空间三大创意动效</li>
+                        <li>全站像素渲染（image-rendering: pixelated）</li>
+                    </ul>
+                </div>
+
+                <!-- 2. 原型 -->
+                <div class="about-section">
+                    <h3>2. 原型 / PROTOTYPE</h3>
+                    <ul>
+                        <li>首页：像素星球居中 + 万花筒背景 + 可点击头像，点击星球触发马赛克过渡</li>
+                        <li>四向导航：水波纹背景 + 上/右/左/下四个像素按钮，分别进入子页面</li>
+                        <li>证明记录与复盘：3D 波浪空间 + 三个浮动像素图标（文件夹/光盘/文档）</li>
+                        <li>阶段练习与项目成果：3D 波浪空间 + 书本陈列，点击展开预览弹窗</li>
+                        <li>个人简介：4:3 复古电脑弹窗（Windows 98 风格），含头像、简介、技能标签</li>
+                        <li>抽屉收藏盒：多层抽屉 + 正方形预览弹窗</li>
+                        <li>过程证据：复用复古弹窗展示开发文档 + 底部附录入口</li>
+                    </ul>
+                </div>
+
+                <!-- 3. 提示词与对话策略 -->
+                <div class="about-section">
+                    <h3>3. 提示词与对话策略 / PROMPTS</h3>
+                    <ul>
+                        <li>先定调再写码：每次新需求先说明整体风格和约束，再给具体功能点</li>
+                        <li>参数精确化：不说"调慢一点"，说"旋转速度 t*0.02"；不说"大一点"，说"放大到 1.06 倍"</li>
+                        <li>约束前置：字体、配色、端口等约束在第一轮对话中一次性明确</li>
+                        <li>修正隔离：修正某处时明确"不要改动其他部分"，防止 AI 自作主张改动已确认内容</li>
+                        <li>资源指名：图片资源给出确切文件名（bubble.png / mei.png / 背景.png）</li>
+                        <li>状态枚举：交互效果按 hover/click/active/idle 状态逐一描述</li>
+                    </ul>
+                </div>
+
+                <!-- 4. 版本记录 -->
+                <div class="about-section">
+                    <h3>4. 版本记录 / VERSIONS</h3>
+                    <ul>
+                        <li>v0.1（09-20）：项目骨架 + 页面切换动画（20x20 像素马赛克过渡）</li>
+                        <li>v0.2（09-21）：首页星球 + 万花筒背景引擎</li>
+                        <li>v0.3（09-22）：四向导航页 + 水波纹可复用引擎</li>
+                        <li>v0.4-v0.6（09-22~23）：阶段练习/个人简介/抽屉收藏盒页面</li>
+                        <li>v0.7（09-24）：证明记录与复盘页 + 三个图标呼吸浮动</li>
+                        <li>v0.8（10-10）：ElevenLabs 四语朗读功能</li>
+                        <li>v0.9~v0.9.5（10-11~12）：头像闪白优化、端口修复、字体恢复、page-6 独立、图标统一</li>
+                        <li>v1.0（10-12）：新增 page-7 过程证据 + 4 份开发文档</li>
+                    </ul>
+                </div>
+
+                <!-- 5. 问题与解决 -->
+                <div class="about-section">
+                    <h3>5. 问题与解决 / ISSUES</h3>
+                    <ul>
+                        <li>Canvas 0x0：display:none 页面 Canvas 初始尺寸为 0，用 MutationObserver 在可见时重新测量</li>
+                        <li>端口占用：8765 被抢占，切换至 8766</li>
+                        <li>字体丢失：ZhengGeDianHei-16 文件被移至 iCloud 回收站，手动恢复</li>
+                        <li>跳转错误：page-3 BACK 误跳 page-5，修正为返回 page-2</li>
+                        <li>头像脉动：简化为点击瞬间闪白，移除朗读期间脉动呼吸</li>
+                        <li>声线不够：Web Speech API 无法复刻狛枝凪斗，接入 ElevenLabs TTS API</li>
+                        <li>API 权限：ElevenLabs Key 未勾选 text_to_speech 权限，重新创建</li>
+                        <li>滚动条不触发：flex 子元素设 min-height:0 限制高度</li>
+                        <li>3D 黑色断裂：墙面尺寸设为 20 + 背景色 0xffd6e8</li>
+                    </ul>
+                </div>
+
+                <!-- 底部：附录入口 -->
+                <div class="appendix-box" onclick="openAppendix()">
+                    ☆ APPENDIX - 附录文档 ☆
+                    <span class="ap-sub">>> 点击查看完整开发文档 <<< /span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 页面 8：迭代记录（开发过程复盘） ================= -->
+    <div id="page-8" class="page">
+        <canvas class="ripple-canvas" id="ripple-canvas-8"></canvas>
+        <button class="back-btn" onclick="switchPage(3)">&lt; BACK</button>
+
+        <div class="about-window">
+            <div class="about-title-bar">
+                <span>iteration_log.exe - 迭代记录</span>
+                <div class="win-btns"><span>_</span><span>□</span><span>×</span></div>
+            </div>
+
+            <div class="about-body" style="min-height: 0;">
+                <div class="about-section">
+                    <h3>迭代记录 / ITERATION LOG</h3>
+                    <p>以下是本网站从立项到交付的完整迭代记录，每次更新均包含「改了什么、为什么改、效果如何、下一步是什么」四个维度，便于回溯开发决策与成长轨迹。</p>
+                </div>
+
+                <!-- v0.1 -->
+                <div class="about-section">
+                    <h3>v0.1 — 2026-09-20 项目骨架搭建</h3>
+                    <ul>
+                        <li><b>改了什么：</b>搭建单 HTML 文件项目结构，定义 CSS 变量（粉色调 + 深紫），引入 Press Start 2P 与 ZhengGeDianHei 16 字体，实现
+                            20×20 像素马赛克页面切换动画，预留 page-1 至 page-6 的空页面框架。</li>
+                        <li><b>为什么改：</b>网站需要统一的视觉基调与可扩展的页面结构，单文件方案便于部署分享，像素马赛克过渡契合 Y2K 复古主题。</li>
+                        <li><b>效果如何：</b>页面间切换流畅，配色与字体全局生效，骨架可支撑后续 6 个页面的功能填充。</li>
+                        <li><b>下一步：</b>实现首页星球与万花筒背景特效。</li>
+                    </ul>
+                </div>
+
+                <!-- v0.2 -->
+                <div class="about-section">
+                    <h3>v0.2 — 2026-09-21 首页星球 + 万花筒背景</h3>
+                    <ul>
+                        <li><b>改了什么：</b>用 bubble.png 实现万花筒背景（12 切片、TEX_SIZE=1500），鼠标水平驱动旋转、垂直驱动取样窗缩放，缓动插值
+                            0.065；首页添加像素星球与粉色发光（::after 伪元素 inset:-80px 径向渐变）。</li>
+                        <li><b>为什么改：</b>首页是网站门面，需要有视觉冲击力的创意动效，万花筒的梦幻感与粉色星球呼应 Y2K 美学。</li>
+                        <li><b>效果如何：</b>60fps 流畅运行，鼠标交互响应灵敏，星球发光营造太空氛围。</li>
+                        <li><b>下一步：</b>实现四向导航页与水波纹背景。</li>
+                    </ul>
+                </div>
+
+                <!-- v0.3 -->
+                <div class="about-section">
+                    <h3>v0.3 — 2026-09-22 四向导航 + 水波纹引擎</h3>
+                    <ul>
+                        <li><b>改了什么：</b>用 mei.png 做底图封装 createRippleEngine(canvasId, pageId, clickExcludeSelector)
+                            可复用函数，damping=0.987，鼠标移动沿方向创建连续波纹（间隔 3px），静止时 4 个自动行走波源；四向导航按钮 z-index:10。</li>
+                        <li><b>为什么改：</b>水波纹是核心交互特效，需多页面复用，封装函数避免重复代码；z-index:10 确保按钮在重叠元素上方可点击。</li>
+                        <li><b>效果如何：</b>波纹扩散自然，鼠标轨迹可感知，多页面调用无冲突。</li>
+                        <li><b>下一步：</b>实现阶段练习与项目成果页（3D 空间 + 书本）。</li>
+                    </ul>
+                </div>
+
+                <!-- v0.4 -->
+                <div class="about-section">
+                    <h3>v0.4 — 2026-09-22 阶段练习与项目成果页</h3>
+                    <ul>
+                        <li><b>改了什么：</b>用 Three.js 实现 3D 波浪网格空间背景（背景.png 贴图、背景色 0xffd6e8、墙面尺寸 20），封装 createSpace3D
+                            可复用函数；5 本书本陈列，宽度 clamp(80px,12vw,140px)，封面 aspect-ratio:5/7，梅粉色渐变边框，点击展开预览弹窗。</li>
+                        <li><b>为什么改：</b>作品展示需要沉浸感，3D 空间比 2D 列表更有表现力；clamp 与 aspect-ratio 确保不同屏幕自适应。</li>
+                        <li><b>效果如何：</b>空间感强，书本排列整齐，点击预览交互顺畅。</li>
+                        <li><b>下一步：</b>实现个人简介页（复古电脑弹窗）。</li>
+                    </ul>
+                </div>
+
+                <!-- v0.5 -->
+                <div class="about-section">
+                    <h3>v0.5 — 2026-09-23 个人简介页 + 全站字号 +2px</h3>
+                    <ul>
+                        <li><b>改了什么：</b>实现 4:3 复古电脑弹窗（占画面 80%），含 Windows 风格标题栏、凹陷面板分区、头像 + 姓名 + 简介 + 学习方向 +
+                            技能标签；.about-body 设 flex:1 1 0 + min-height:0 + overflow-y:scroll 强制滚动；全站字号整体 +2px。</li>
+                        <li><b>为什么改：</b>复古弹窗契合 Y2K 主题，需要可滚动内容区承载大量文字；原字号偏小影响中文铁素字体可读性。</li>
+                        <li><b>效果如何：</b>弹窗还原度高，滚动正常，字号提升后阅读舒适。</li>
+                        <li><b>下一步：</b>实现抽屉收藏盒页。</li>
+                    </ul>
+                </div>
+
+                <!-- v0.6 -->
+                <div class="about-section">
+                    <h3>v0.6 — 2026-09-23 抽屉收藏盒页</h3>
+                    <ul>
+                        <li><b>改了什么：</b>多层抽屉（追星/看漫画/追番/玩二游/玩端游），点击展开预览弹窗，预览图 aspect-ratio:1/1 + object-fit:cover
+                            实现正方形，弹窗 max-height:92vh + overflow-y:auto。</li>
+                        <li><b>为什么改：</b>收藏内容需要分类展示，抽屉交互有仪式感；正方形预览避免图片变形，92vh 限制适应小屏幕。</li>
+                        <li><b>效果如何：</b>抽屉开合流畅，预览图无变形，小屏可滚动。</li>
+                        <li><b>下一步：</b>实现证明记录与复盘页。</li>
+                    </ul>
+                </div>
+
+                <!-- v0.7 -->
+                <div class="about-section">
+                    <h3>v0.7 — 2026-09-24 证明记录与复盘页</h3>
+                    <ul>
+                        <li><b>改了什么：</b>复用 3D 波浪空间背景，三个像素图标（文件夹/光盘/文档），统一 140x140 尺寸，呼吸浮动动画 4s ease-in-out，hover
+                            停止浮动并发白（brightness:1.6 + drop-shadow）。</li>
+                        <li><b>为什么改：</b>证明记录需要分类入口，浮动动画增加灵动性，hover 发白提供交互反馈。</li>
+                        <li><b>效果如何：</b>图标灵动，交互反馈清晰，与 3D 背景层次分明。</li>
+                        <li><b>下一步：</b>实现首页头像朗读功能。</li>
+                    </ul>
+                </div>
+
+                <!-- v0.8 -->
+                <div class="about-section">
+                    <h3>v0.8 — 2026-10-10 ElevenLabs 四语朗读</h3>
+                    <ul>
+                        <li><b>改了什么：</b>接入 ElevenLabs TTS API，使用狛枝凪斗音色（voice ID:
+                            iOvds81TRlfmPeNE39dR），中日韩英四语自我介绍按句拆分链式播放，已合成音频 blob 缓存，点击头像触发、再次点击停止。</li>
+                        <li><b>为什么改：</b>浏览器原生 Web Speech API 无法复刻狛枝凪斗声线，需接入 AI 语音克隆服务；按句拆分 + 缓存提升流畅度。</li>
+                        <li><b>效果如何：</b>声线还原度高，四语衔接自然，二次合成走缓存无延迟。</li>
+                        <li><b>下一步：</b>优化头像交互视觉效果。</li>
+                    </ul>
+                </div>
+
+                <!-- v0.9 -->
+                <div class="about-section">
+                    <h3>v0.9 — 2026-10-11 头像交互优化</h3>
+                    <ul>
+                        <li><b>改了什么：</b>简化头像点击效果为「瞬间闪白」（flash 类 500ms 后移除），移除朗读期间的脉动呼吸泛白；hover 时放大 1.06 倍 + 粉色发光。</li>
+                        <li><b>为什么改：</b>原脉动效果过于复杂干扰视觉，闪白更简洁；hover 反馈增强可点击感知。</li>
+                        <li><b>效果如何：</b>点击反馈干脆，无多余动画干扰，hover 状态清晰。</li>
+                        <li><b>下一步：</b>修复 8765 端口占用与字体丢失问题。</li>
+                    </ul>
+                </div>
+
+                <!-- v0.9.1 ~ v0.9.2 -->
+                <div class="about-section">
+                    <h3>v0.9.1 ~ v0.9.2 — 2026-10-11 环境修复</h3>
+                    <ul>
+                        <li><b>改了什么：</b>预览端口从 8765 切换至 8766；从 iCloud 回收站恢复 ZhengGeDianHei-16.woff2 / .ttf 字体文件。</li>
+                        <li><b>为什么改：</b>8765 被其他进程抢占导致预览失效；字体文件被误删导致中文回退系统默认字体。</li>
+                        <li><b>效果如何：</b>预览服务稳定运行，中文字体恢复铁素像素风格。</li>
+                        <li><b>下一步：</b>修正 page-3 退出跳转逻辑。</li>
+                    </ul>
+                </div>
+
+                <!-- v0.9.3 -->
+                <div class="about-section">
+                    <h3>v0.9.3 — 2026-10-11 page-3 退出逻辑修正</h3>
+                    <ul>
+                        <li><b>改了什么：</b>将证明记录与复盘页（page-3）BACK 按钮的 onclick 从 switchPage(5) 改为 switchPage(2)。</li>
+                        <li><b>为什么改：</b>原逻辑退出时跳转到个人简介页，不符合"返回上一级"的预期，应返回四向导航页。</li>
+                        <li><b>效果如何：</b>退出路径正确，用户不再迷路。</li>
+                        <li><b>下一步：</b>将抽屉收藏盒独立为 page-6。</li>
+                    </ul>
+                </div>
+
+                <!-- v0.9.4 -->
+                <div class="about-section">
+                    <h3>v0.9.4 — 2026-10-12 抽屉收藏盒独立为 page-6</h3>
+                    <ul>
+                        <li><b>改了什么：</b>新建 page-6 作为抽屉收藏盒（内容与原抽屉完全一致），page-5 的 MY FAVORITE LIST 跳转 page-6，BACK 返回
+                            page-5。</li>
+                        <li><b>为什么改：</b>原抽屉收藏盒与个人简介共用页面，层级混乱，独立后导航更清晰。</li>
+                        <li><b>效果如何：</b>抽屉收藏盒独立成页，进退路径明确。</li>
+                        <li><b>下一步：</b>统一 page-3 三个图标尺寸与资源。</li>
+                    </ul>
+                </div>
+
+                <!-- v0.9.5 -->
+                <div class="about-section">
+                    <h3>v0.9.5 — 2026-10-12 图标资源统一</h3>
+                    <ul>
+                        <li><b>改了什么：</b>page-3 三个图标改用用户提供的图片资源（文件夹.png / 光盘.png / 文档.png），统一设置 140x140 +
+                            object-fit:contain。</li>
+                        <li><b>为什么改：</b>原 CSS 绘制图标风格不统一且尺寸有差异，用户提供的资源更符合预期。</li>
+                        <li><b>效果如何：</b>三个图标视觉统一，像素风格一致。</li>
+                        <li><b>下一步：</b>新增过程证据页与开发文档。</li>
+                    </ul>
+                </div>
+
+                <!-- v1.0 -->
+                <div class="about-section">
+                    <h3>v1.0 — 2026-10-12 过程证据页 + 4 份开发文档</h3>
+                    <ul>
+                        <li><b>改了什么：</b>新增 page-7（过程证据），水波纹背景 +
+                            复古弹窗，按点总结需求/原型/提示词策略/版本记录/问题与解决；生成需求文档.md、需求文档.docx（含表格）、提示词文档.md、版本记录与问题解决.md 四份文档；底部附录 box
+                            点击弹出粉色弹窗显示文档链接。</li>
+                        <li><b>为什么改：</b>需要完整呈现网站开发过程，文档化便于评审与回溯；附录弹窗集中展示文档入口。</li>
+                        <li><b>效果如何：</b>开发过程清晰可查，4 份文档覆盖需求/方法/迭代/问题全维度。</li>
+                        <li><b>下一步：</b>实现 Markdown 文档在线预览。</li>
+                    </ul>
+                </div>
+
+                <!-- v1.1 -->
+                <div class="about-section">
+                    <h3>v1.1 — 2026-10-12 文档在线预览 + 光盘图标缩小</h3>
+                    <ul>
+                        <li><b>改了什么：</b>引入 marked.js 实现 .md 文档在弹窗内渲染预览（粉色调样式），.docx 保留直接下载；光盘图标单独缩小至 112x112（文件夹/文档保持
+                            140x140）；新增 page-8 迭代记录页。</li>
+                        <li><b>为什么改：</b>用户希望文档可直接预览而非下载；光盘图标视觉上偏大需缩小；迭代记录需要独立页面详细展示。</li>
+                        <li><b>效果如何：</b>Markdown 文档在弹窗内美观渲染，图标比例更协调，迭代记录完整可追溯。</li>
+                        <li><b>下一步：</b>持续迭代，根据反馈优化细节。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 页面 9：最终学习复盘 ================= -->
+    <div id="page-9" class="page">
+        <canvas class="ripple-canvas" id="ripple-canvas-9"></canvas>
+        <button class="back-btn" onclick="switchPage(3)">&lt; BACK</button>
+
+        <div class="about-window">
+            <div class="about-title-bar">
+                <span>final_reflection.exe - 最终学习复盘</span>
+                <div class="win-btns"><span>_</span><span>□</span><span>×</span></div>
+            </div>
+
+            <div class="about-body" style="min-height: 0;">
+                <div class="about-section">
+                    <h3>最终学习复盘 / FINAL REFLECTION</h3>
+                    <p>本网站是我第一次独立完成的完整前端项目，从需求分析到设计落地，从特效实现到问题排查，整个过程让我在技术、设计、思维三个维度都有了显著成长。以下是我对本次项目的全面复盘。</p>
+                </div>
+
+                <!-- 一、技术收获 -->
+                <div class="about-section">
+                    <h3>一、技术收获 / TECHNICAL GAINS</h3>
+                    <ul>
+                        <li><b>Canvas 2D 深入掌握：</b>通过万花筒和水波纹两个引擎，深入理解了 Canvas
+                            的像素级操作（getImageData/putImageData）、离屏画布、纹理采样与变形、requestAnimationFrame 动画循环。万花筒的 12
+                            切片对称绘制、水波纹的双缓冲波场计算，让我对 2D 图形渲染有了质的飞跃。</li>
+                        <li><b>Three.js 3D 空间入门：</b>学会了场景/相机/渲染器的基本搭建，ShaderMaterial 自定义着色器实现波浪网格，纹理贴图与 RepeatWrapping
+                            重复平铺，以及页面可见性触发的按需初始化。</li>
+                        <li><b>CSS 工程化实践：</b>用 CSS 变量统一管理配色，用 clamp() 实现响应式尺寸，用 aspect-ratio 固定比例，用 flex 布局 +
+                            min-height:0 解决滚动容器问题，用 ::after 伪元素实现发光效果，这些技巧让代码更整洁、可维护性更强。</li>
+                        <li><b>第三方 API 接入：</b>成功接入 ElevenLabs TTS API，掌握了 fetch + Blob + URL.createObjectURL
+                            的音频播放流程，以及按句拆分 + 缓存的性能优化策略。</li>
+                        <li><b>可复用函数封装：</b>将水波纹和 3D 空间封装为 createRippleEngine / createSpace3D，多页面共享同一套逻辑，体会到了"DRY
+                            原则"在实际项目中的价值。</li>
+                    </ul>
+                </div>
+
+                <!-- 二、设计感悟 -->
+                <div class="about-section">
+                    <h3>二、设计感悟 / DESIGN INSIGHTS</h3>
+                    <ul>
+                        <li><b>风格统一是灵魂：</b>全站粉色调 + 像素字体 + Windows 98 弹窗的组合，形成了强烈的 Y2K
+                            视觉识别度。每一个细节（边框阴影、按钮按压、滚动条样式）都服务于整体风格，缺一不可。</li>
+                        <li><b>动效服务于体验：</b>万花筒、水波纹、3D 波浪、呼吸浮动——这些动效不是为了炫技，而是为了营造"星球"的沉浸感和"复古"的怀旧感。动效要克制，过度反而干扰内容。</li>
+                        <li><b>交互反馈要清晰：</b>hover 放大、点击闪白、按下位移——每一个可交互元素都要有明确的状态反馈，让用户知道"这个能点""点到了"。</li>
+                        <li><b>字体是气质的关键：</b>Press Start 2P 的英文字体和 ZhengGeDianHei 16
+                            的中文铁素字体，直接决定了网站的"像素复古"气质。选错字体，再好看的配色也救不回来。</li>
+                        <li><b>自适应不可忽视：</b>clamp()、aspect-ratio、flex-wrap 这些响应式手段，确保了网站在不同屏幕尺寸下都能正常展示，避免了"在我电脑上好好的"的尴尬。
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 三、问题解决能力 -->
+                <div class="about-section">
+                    <h3>三、问题解决能力 / PROBLEM-SOLVING</h3>
+                    <ul>
+                        <li><b>从现象到根因：</b>遇到 Canvas 0x0、滚动条不触发、字体回退等问题时，学会了不急于改代码，而是先定位根因（display:none 隐藏、flex
+                            min-height:auto、字体文件缺失），再针对性修复。</li>
+                        <li><b>善用浏览器开发者工具：</b>Console 报错、Network 面板、Elements 实时调试，这些工具让排查效率成倍提升。尤其是 Network 面板，帮助定位了 API
+                            权限不足、字体加载失败等问题。</li>
+                        <li><b>勇于换方案：</b>当 Web Speech API 无法复刻狛枝凪斗声线时，没有死磕，而是果断切换到 ElevenLabs 方案。技术选型不一定要"最原生"，而是要"最适合"。
+                        </li>
+                        <li><b>记录与回溯：</b>每一个问题都记录在版本记录与问题解决文档中，形成可追溯的知识库。下次遇到类似问题，可以直接查阅，不用重新踩坑。</li>
+                    </ul>
+                </div>
+
+                <!-- 四、协作与沟通 -->
+                <div class="about-section">
+                    <h3>四、协作与沟通 / COLLABORATION</h3>
+                    <ul>
+                        <li><b>与 AI 协作的方法论：</b>学会了用精确参数代替模糊描述（"旋转速度
+                            t*0.02"而非"调慢一点"），用约束前置减少返工（字体/配色/端口一次性说清），用"不要改动其他部分"隔离修正范围。</li>
+                        <li><b>需求表达要结构化：</b>把需求拆成"背景→目标→约束→验收标准"四层，AI 才能准确理解意图，避免南辕北辙。</li>
+                        <li><b>及时验证不盲信：</b>AI 给出的代码不一定全对，每次修改后都要实际运行验证，遇到"没看见效果"先硬刷新清缓存，再排查代码。</li>
+                    </ul>
+                </div>
+
+                <!-- 五、不足与改进 -->
+                <div class="about-section">
+                    <h3>五、不足与改进 / SHORTCOMINGS</h3>
+                    <ul>
+                        <li><b>缺少代码注释：</b>部分复杂逻辑（如水波纹波场计算、万花筒切片数学）没有写注释，后续维护时需要重新推导。改进：关键算法必须写清思路和公式。</li>
+                        <li><b>移动端适配不足：</b>目前主要针对桌面端优化，移动端的触摸交互、小屏布局还需要专门适配。改进：增加 touch 事件监听，用 media query 针对小屏调整。</li>
+                        <li><b>性能优化空间：</b>万花筒和水波纹同时运行时，低端设备可能掉帧。改进：用 Page Visibility API 在页面不可见时暂停动画，降低采样率。</li>
+                        <li><b>无障碍设计缺失：</b>没有考虑键盘导航、屏幕阅读器、色盲友好等无障碍需求。改进：补充 aria-label、tabindex、焦点样式。</li>
+                        <li><b>版本管理不规范：</b>没有使用 Git，所有改动都在单文件上直接修改，无法回滚。改进：后续项目必须用 Git 管理，每个版本打 tag。</li>
+                    </ul>
+                </div>
+
+                <!-- 六、未来规划 -->
+                <div class="about-section">
+                    <h3>六、未来规划 / FUTURE PLANS</h3>
+                    <ul>
+                        <li><b>深化 Canvas 与 WebGL：</b>继续学习 Shader 编程，尝试用 WebGL 实现更复杂的粒子系统和后处理特效，把万花筒和水波纹升级到 GPU 加速。</li>
+                        <li><b>学习前端框架：</b>下一项目尝试用 Vue 或 React 重构，理解组件化、状态管理、路由等工程化概念，对比原生 JS 的差异。</li>
+                        <li><b>拓展游戏开发：</b>网站里有多个 IP 二创作品（全职猎人/弹丸论破/银魂），未来想做完整的网页小游戏，加入关卡设计、存档系统、排行榜等。</li>
+                        <li><b>建立个人作品集：</b>把这个网站作为起点，持续迭代更新，把更多作品和项目加进来，打造一个真正属于自己的"星球"。</li>
+                        <li><b>保持记录习惯：</b>延续本次项目的文档化习惯，每个项目都写需求文档、迭代记录、问题解决和最终复盘，让成长有迹可循。</li>
+                    </ul>
+                </div>
+
+                <!-- 结语 -->
+                <div class="about-section">
+                    <h3>结语 / CLOSING</h3>
+                    <p>
+                        这个网站从一行代码开始，到现在 7 个页面、3 套引擎、4 份文档，每一个像素都是认真攒下的小星星。它不完美，但它是我的。感谢 Y2K 美学给了我灵感，感谢 AI
+                        工具给了我助力，更感谢那个愿意从零开始、一步步把想法变成现实的自己。未来的路还很长，继续在自己的星球上发光吧 ♡
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 附录粉色弹窗 ================= -->
+    <div class="appendix-overlay" id="appendix-overlay" onclick="closeAppendix(event)">
+        <div class="appendix-popup">
+            <div class="appendix-popup-header">
+                <span>appendix.doc - 附录文档</span>
+                <div class="nostalgia-controls">
+                    <span class="dot dot-red" onclick="closeAppendix()"></span>
+                    <span class="dot dot-yellow"></span>
+                    <span class="dot dot-green"></span>
+                </div>
+            </div>
+            <div class="appendix-popup-body">
+                <div class="appendix-intro">
+                    ☆以下是本网站完整开发文档☆
+                </div>
+                <a class="doc-link" href="需求文档.md" onclick="previewDoc('需求文档.md', 'md'); return false;">
+                    <span class="doc-icon">📄</span>
+                    <div class="doc-info">
+                        <div class="doc-name">需求文档</div>
+                        <div class="doc-format">Markdown (.md) — 点击在线预览</div>
+                    </div>
+                </a>
+                <a class="doc-link" href="需求文档.docx" target="_blank">
+                    <span class="doc-icon">📝</span>
+                    <div class="doc-info">
+                        <div class="doc-name">需求文档</div>
+                        <div class="doc-format">Word (.docx) — 点击下载后查看</div>
+                    </div>
+                </a>
+                <a class="doc-link" href="提示词文档.md" onclick="previewDoc('提示词文档.md', 'md'); return false;">
+                    <span class="doc-icon">💬</span>
+                    <div class="doc-info">
+                        <div class="doc-name">提示词文档</div>
+                        <div class="doc-format">Markdown (.md) — 点击在线预览</div>
+                    </div>
+                </a>
+                <a class="doc-link" href="版本记录与问题解决.md" onclick="previewDoc('版本记录与问题解决.md', 'md'); return false;">
+                    <span class="doc-icon">📋</span>
+                    <div class="doc-info">
+                        <div class="doc-name">版本记录与问题解决</div>
+                        <div class="doc-format">Markdown (.md) — 点击在线预览</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 文档在线预览弹窗 ================= -->
+    <div class="doc-preview-overlay" id="doc-preview-overlay" onclick="closeDocPreview(event)">
+        <div class="doc-preview-window">
+            <div class="doc-preview-header">
+                <span id="doc-preview-title">文档预览</span>
+                <div class="nostalgia-controls">
+                    <span class="dot dot-red" onclick="closeDocPreview()"></span>
+                    <span class="dot dot-yellow"></span>
+                    <span class="dot dot-green"></span>
+                </div>
+            </div>
+            <div class="doc-preview-body" id="doc-preview-body">
+                <div class="doc-loading">♡ 文档加载中... ♡</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 通用弹窗 ================= -->
+    <div class="modal-overlay" id="detail-modal">
+        <div class="nostalgia-window">
+            <div class="nostalgia-header">
+                <span id="modal-title">90's_nostalgia.mov</span>
+                <div class="nostalgia-controls">
+                    <span class="dot dot-red" onclick="closeModal()"></span>
+                    <span class="dot dot-yellow"></span>
+                    <span class="dot dot-green"></span>
+                </div>
+            </div>
+            <div class="nostalgia-body">
+                <div class="item-img-frame">
+                    <img id="modal-img" src="" alt="Detail Image">
+                </div>
+                <div class="item-desc" id="modal-desc">
+                    介绍加载中...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 动态万花筒引擎 ================= -->
+    <script>
+        (function () {
+            'use strict';
+            if (window.__cargoKaleidoscope) return;
+
+            var canvas = document.getElementById('kaleidoscope-bg');
+            var ctx = canvas.getContext('2d');
+
+            var TEX_SIZE = 1500;
+            var SLICES = 12;
+            var TAU = Math.PI * 2;
+
+            var W = 0, H = 0, DPR = 1, CX = 0, CY = 0, RADIUS = 0;
+            var elapsed = 0, lastTs = 0, visible = true;
+            var mouse = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5 };
+
+            function mulberry32(a) {
+                return function () {
+                    a |= 0; a = a + 0x6D2B79F5 | 0;
+                    var t = Math.imul(a ^ a >>> 15, 1 | a);
+                    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+                    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+                };
+            }
+            var rand = mulberry32(20260913);
+            function rr(a, b) { return a + rand() * (b - a); }
+            function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+
+            function buildTexture(S) {
+                var c = document.createElement('canvas');
+                c.width = S; c.height = S;
+                var g = c.getContext('2d');
+                g.lineCap = 'round';
+                g.lineJoin = 'round';
+
+                g.fillStyle = '#ffe0ee';
+                g.fillRect(0, 0, S, S);
+
+                function J(v, k) { return v + (rand() - 0.5) * 2 * k; }
+
+                function dot(x, y, r, col, a) {
+                    g.save();
+                    g.globalAlpha = a;
+                    g.fillStyle = col;
+                    g.beginPath();
+                    g.arc(x, y, r, 0, TAU);
+                    g.fill();
+                    g.restore();
+                }
+
+                function rough(segs, color, width, alpha, jit, close) {
+                    for (var p = 0; p < 2; p++) {
+                        g.beginPath();
+                        g.moveTo(J(segs[0][0], jit), J(segs[0][1], jit));
+                        for (var i = 0; i < segs.length; i++) {
+                            var s = segs[i];
+                            g.bezierCurveTo(J(s[2], jit), J(s[3], jit),
+                                J(s[4], jit), J(s[5], jit),
+                                J(s[6], jit), J(s[7], jit));
+                        }
+                        if (close) g.closePath();
+                        g.strokeStyle = color;
+                        g.globalAlpha = alpha * (p ? 0.55 : 1);
+                        g.lineWidth = width * (p ? 0.9 : 1);
+                        g.stroke();
+                    }
+                    g.globalAlpha = 1;
+                }
+
+                var blobCols = [
+                    'rgba(255,192,222,',
+                    'rgba(248,196,224,',
+                    'rgba(255,168,208,',
+                    'rgba(255,225,238,'
+                ];
+                for (var bI = 0; bI < 20; bI++) {
+                    var bx = rr(-100, S + 100), by = rr(-100, S + 100);
+                    var br = rr(90, 280), ba = rr(0.16, 0.38);
+                    var bc = blobCols[bI % blobCols.length];
+                    var grad = g.createRadialGradient(bx, by, 0, bx, by, br);
+                    grad.addColorStop(0, bc + ba + ')');
+                    grad.addColorStop(1, bc + '0)');
+                    g.fillStyle = grad;
+                    g.beginPath();
+                    g.arc(bx, by, br, 0, TAU);
+                    g.fill();
+                }
+
+                function petalFill(l, w, fill) {
+                    g.beginPath();
+                    g.moveTo(0, 0);
+                    g.bezierCurveTo(-w, -l * 0.22, -w * 0.95, -l * 0.78, 0, -l);
+                    g.bezierCurveTo(w * 0.95, -l * 0.78, w, -l * 0.22, 0, 0);
+                    g.closePath();
+                    g.fillStyle = fill;
+                    g.fill();
+                }
+                function petalSegs(l, w) {
+                    return [
+                        [0, 0, -w, -l * 0.22, -w * 0.95, -l * 0.78, 0, -l],
+                        [0, -l, w * 0.95, -l * 0.78, w, -l * 0.22, 0, 0]
+                    ];
+                }
+
+                var petalFills = [
+                    'rgba(255,250,253,0.90)',
+                    'rgba(255,232,244,0.85)',
+                    'rgba(255,214,235,0.80)'
+                ];
+                function drawIris(x, y, s, rot) {
+                    g.save();
+                    g.translate(x, y);
+                    g.rotate(rot);
+                    for (var i = 0; i < 6; i++) {
+                        var big = (i % 2 === 0);
+                        var l = s * (big ? 1 : 0.72);
+                        var w = s * (big ? 0.30 : 0.22);
+                        g.save();
+                        g.rotate(i / 6 * TAU + rr(-0.06, 0.06));
+                        petalFill(l, w, petalFills[i % 3]);
+                        rough(petalSegs(l, w), '#b14e83', 1.7, 0.5, 1.6, true);
+                        rough([[0, -l * 0.15, -w * 0.2, -l * 0.45, w * 0.15, -l * 0.6, 0, -l * 0.82]],
+                            big ? '#d64082' : '#e87cb0', 1.1, 0.35, 1.4, false);
+                        if (big) {
+                            for (var k = 0; k < 3; k++) {
+                                var yy = -l * (0.18 + 0.1 * k);
+                                rough([[-2, yy, -1, yy - 4, 1, yy - 3, 2.5, yy - 7]],
+                                    '#ec5d9e', 1.5, 0.75, 1.2, false);
+                            }
+                            for (var d = 0; d < 3; d++) {
+                                dot(rr(-3, 3), -l * rr(0.2, 0.45), 1.1, '#ff8fc4', 0.6);
+                            }
+                        }
+                        g.restore();
+                    }
+                    dot(0, 0, s * 0.05, '#d64082', 0.9);
+                    for (var c = 0; c < 6; c++) {
+                        var ca = c / 6 * TAU;
+                        dot(Math.cos(ca) * s * 0.07, Math.sin(ca) * s * 0.07, 1.3, '#ff8fc4', 0.7);
+                    }
+                    g.restore();
+                }
+
+                function drawLeaf(x, y, l, w, rot) {
+                    g.save();
+                    g.translate(x, y);
+                    g.rotate(rot);
+                    var bend = rr(-0.12, 0.12) * l;
+                    g.beginPath();
+                    g.moveTo(0, 0);
+                    g.bezierCurveTo(-w, -l * 0.3, -w * 0.8 - bend, -l * 0.75, -bend, -l);
+                    g.bezierCurveTo(w * 0.6 - bend, -l * 0.7, w * 0.4, -l * 0.25, 0, 0);
+                    g.closePath();
+                    g.fillStyle = 'rgba(214,64,130,0.07)';
+                    g.fill();
+                    g.strokeStyle = '#cf7da8';
+                    g.globalAlpha = 0.45;
+                    g.lineWidth = 1.3;
+                    g.stroke();
+                    g.globalAlpha = 1;
+                    g.restore();
+                }
+
+                function drawCluster() {
+                    var bx = rr(-60, S + 60);
+                    var by = rr(S * 0.42, S + 100);
+                    var fx = bx + rr(-150, 150);
+                    var fy = by - rr(220, 460);
+                    if (rand() < 0.7) {
+                        var t = rr(0.25, 0.6);
+                        drawLeaf(bx + (fx - bx) * t + rr(-15, 15),
+                            by + (fy - by) * t,
+                            rr(80, 150), rr(7, 13), rr(-1.1, 1.1));
+                    }
+                    rough([[bx, by,
+                        bx + (fx - bx) * 0.3 + rr(-25, 25), (by + fy) / 2,
+                        fx + rr(-20, 20), fy + 60,
+                        fx, fy]],
+                        '#d98bb4', 2, 0.4, 1.4, false);
+                    drawIris(fx, fy, rr(52, 92), rr(0, TAU));
+                }
+
+                function drawTiny(x, y, s, rot) {
+                    g.save();
+                    g.translate(x, y);
+                    g.rotate(rot);
+                    for (var i = 0; i < 5; i++) {
+                        g.save();
+                        g.rotate(i / 5 * TAU);
+                        petalFill(s, s * 0.5, 'rgba(244,196,220,0.55)');
+                        rough(petalSegs(s, s * 0.5), '#cf6fa6', 1, 0.45, 1.2, true);
+                        g.restore();
+                    }
+                    dot(0, 0, s * 0.16, '#ff7ebb', 0.9);
+                    g.restore();
+                }
+
+                function drawCross(x, y, s) {
+                    g.save();
+                    g.translate(x, y);
+                    g.rotate(rr(0, Math.PI));
+                    rough([[-s, 0, -s * 0.3, -1, s * 0.3, 1, s, 0]], '#d64082', 1.3, 0.5, 1, false);
+                    rough([[0, -s, -1, -s * 0.3, 1, s * 0.3, 0, s]], '#b14e83', 1.3, 0.5, 1, false);
+                    g.restore();
+                    dot(x + rr(-14, 14), y + rr(-14, 14), rr(1, 2),
+                        rand() < 0.5 ? '#ff9fc9' : '#e58bb8', 0.7);
+                }
+
+                function drawSeed(x, y, s, rot) {
+                    g.save();
+                    g.translate(x, y);
+                    g.rotate(rot);
+                    g.strokeStyle = '#c97097';
+                    g.lineWidth = 1.3;
+                    for (var p = 0; p < 2; p++) {
+                        g.globalAlpha = p ? 0.3 : 0.55;
+                        g.beginPath();
+                        g.ellipse(J(0, 1), J(0, 1), J(s * 0.5, 0.8), J(s, 0.8), 0, 0, TAU);
+                        g.stroke();
+                    }
+                    g.globalAlpha = 0.8;
+                    g.strokeStyle = '#f28abc';
+                    g.lineWidth = 1.4;
+                    for (var q = 0; q < 2; q++) {
+                        var yy = -s * 0.3 + q * s * 0.5;
+                        g.beginPath();
+                        g.moveTo(J(-s * 0.25, 1), J(yy, 1));
+                        g.lineTo(J(s * 0.25, 1), J(yy, 1));
+                        g.stroke();
+                    }
+                    g.globalAlpha = 1;
+                    g.restore();
+                }
+
+                for (var ci = 0; ci < 9; ci++) drawCluster();
+
+                for (var si = 0; si < 10; si++) {
+                    drawIris(rr(-80, S + 80), rr(-80, S + 80), rr(45, 85), rr(0, TAU));
+                }
+                for (var li = 0; li < 8; li++) {
+                    drawLeaf(rr(-60, S + 60), rr(-60, S + 60),
+                        rr(90, 180), rr(7, 14), rr(0, TAU));
+                }
+                for (var ti = 0; ti < 16; ti++) {
+                    drawTiny(rr(0, S), rr(0, S), rr(7, 13), rr(0, TAU));
+                }
+                for (var xi = 0; xi < 20; xi++) {
+                    drawCross(rr(0, S), rr(0, S), rr(5, 10));
+                }
+                for (var di = 0; di < 6; di++) {
+                    drawSeed(rr(0, S), rr(0, S), rr(7, 12), rr(0, TAU));
+                }
+                for (var ni = 0; ni < 36; ni++) {
+                    dot(rr(0, S), rr(0, S), rr(0.8, 2.2),
+                        rand() < 0.5 ? '#ff9fc9' : '#e58bb8', rr(0.3, 0.65));
+                }
+
+                return c;
+            }
+
+            var texture = buildTexture(TEX_SIZE);
+
+            var bubbleTex = new Image();
+            bubbleTex.onerror = function () { bubbleTex = null; };
+            bubbleTex.src = 'bubble.png';
+
+            function resize() {
+                DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+                W = window.innerWidth;
+                H = window.innerHeight;
+                canvas.width = Math.round(W * DPR);
+                canvas.height = Math.round(H * DPR);
+                canvas.style.width = W + 'px';
+                canvas.style.height = H + 'px';
+                ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                CX = W / 2;
+                CY = H / 2;
+                RADIUS = Math.hypot(W, H) / 2;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            window.addEventListener('pointermove', function (e) {
+                mouse.tx = e.clientX / W;
+                mouse.ty = e.clientY / H;
+            }, { passive: true });
+
+            function render(t) {
+                mouse.x += (mouse.tx - mouse.x) * 0.04;
+                mouse.y += (mouse.ty - mouse.y) * 0.04;
+
+                ctx.fillStyle = '#ffe0ee';
+                ctx.fillRect(0, 0, W, H);
+
+                var tex = (bubbleTex && bubbleTex.complete && bubbleTex.naturalWidth > 0)
+                    ? bubbleTex : texture;
+                var TW = tex.naturalWidth || tex.width;
+                var TH = tex.naturalHeight || tex.height;
+                var u = t * 0.08;
+                var sampleSize = Math.min(TW, TH) * (0.93 + 0.03 * Math.sin(t * 0.11));
+                var px = TW / 2
+                    + Math.cos(u * 0.9) * TW * 0.04
+                    + Math.sin(u * 0.33) * TW * 0.02
+                    + (mouse.x - 0.5) * 40;
+                var py = TH / 2
+                    + Math.sin(u * 0.7) * TH * 0.04
+                    + Math.cos(u * 0.21) * TH * 0.02
+                    + (mouse.y - 0.5) * 40;
+
+                var m = sampleSize / 2 + 2;
+                px = clamp(px, m, TW - m);
+                py = clamp(py, m, TH - m);
+
+                var step = TAU / SLICES;
+                var d = RADIUS;
+
+                ctx.save();
+                ctx.translate(CX, CY);
+                ctx.rotate(t * 0.02);
+
+                for (var i = 0; i < SLICES; i++) {
+                    ctx.save();
+                    ctx.rotate(i * step);
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.arc(0, 0, d, -step / 2, step / 2);
+                    ctx.closePath();
+                    ctx.clip();
+                    if (i & 1) ctx.scale(1, -1);
+                    ctx.drawImage(tex,
+                        px - sampleSize / 2, py - sampleSize / 2, sampleSize, sampleSize,
+                        -d, -d, d * 2, d * 2);
+                    ctx.restore();
+                }
+                ctx.restore();
+
+                var glow = ctx.createRadialGradient(
+                    CX, CY, 0, CX, CY, Math.min(W, H) * 0.48);
+                glow.addColorStop(0, 'rgba(255,240,248,0.42)');
+                glow.addColorStop(1, 'rgba(255,240,248,0)');
+                ctx.fillStyle = glow;
+                ctx.fillRect(0, 0, W, H);
+
+                var vig = ctx.createRadialGradient(
+                    CX, CY, Math.min(W, H) * 0.35, CX, CY, d);
+                vig.addColorStop(0, 'rgba(214,64,130,0)');
+                vig.addColorStop(1, 'rgba(214,64,130,0.10)');
+                ctx.fillStyle = vig;
+                ctx.fillRect(0, 0, W, H);
+            }
+
+            function frame(ts) {
+                if (window.__cargoKaleidoscope) return;
+                if (!lastTs) lastTs = ts;
+                var dt = Math.min((ts - lastTs) / 1000, 0.05);
+                lastTs = ts;
+                if (visible) {
+                    if (!W || !H || W !== window.innerWidth || H !== window.innerHeight) resize();
+                    elapsed += dt;
+                    render(elapsed);
+                }
+                requestAnimationFrame(frame);
+            }
+            render(0);
+
+            requestAnimationFrame(frame);
+
+            window.setKaleidoscope = function (on) {
+                visible = !!on;
+                canvas.style.opacity = on ? '1' : '0';
+            };
+        })();
+    </script>
+
+    <!-- ================= 交互逻辑 Script ================= -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <!-- marked.js：Markdown 文档在线预览 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- mammoth.js：Word (.docx) 文档转 HTML 在线预览 -->
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+    <script>
+        const hobbiesData = [
+            {
+                title: "追星.mov",
+                img: "p6.jpg",
+                desc: "【追星】我最最最喜爱的爱豆MarkLee，( ͡σ̴̶̷̤. ͡σ̴̶̷̤.) ෆ*✲ﾟ*他的舞蹈、rap和solo歌曲都是我的最爱。"
+            },
+            {
+                title: "看漫画.mov",
+                img: "p7.jpg",
+                desc: "【看漫画】我最爱的漫画就是《全职猎人》，最喜欢猎人三美和主角团四人组，尤其是奇犽和库洛洛。"
+            },
+            {
+                title: "追番.mov",
+                img: "p8.jpg",
+                desc: "【追番】我的最爱番是《银魂》，因为它特别搞笑有趣，画风也制作精良，还有我最爱的角色冲田总悟。"
+            },
+            {
+                title: "玩二游.mov",
+                img: "p9.jpg",
+                desc: "【玩二游】我最爱的二游就是重返未来1999，尤其喜欢里面的十四行诗、维尔汀和灰调蓝，祝我的产品tk149999."
+            },
+            {
+                title: "玩端游.mov",
+                img: "p10.jpg",
+                desc: "【玩端游】我最爱的端游是弹丸论破2，里面有我喜欢了7年的角色狛枝凪斗，这是我喜欢最久的一个角色也是我最喜欢的角色。"
+            }
+        ];
+
+        const gameUrl = "https://app-e8vxxr0njz7l.miaoda.online?s=s?s=s";
+        const gameUrl2 = "https://app-e93n8nu3e5tt.miaoda.online";
+        const gameUrl3 = "https://app-e93ix0abiby9.miaoda.online";
+        const gameUrl4 = "https://signsign.mindock.ai/gintama2";
+        const gameUrl5 = "https://6aa7c018d8f312365e5259b9--splendid-beignet-76878f.netlify.app";
+        const worksData = [
+            {
+                title: "合成大西瓜_HXH.exe",
+                img: "p2.jpg",
+                desc: `【个人作品】<br>课堂第一周任务：使用秒哒无代码平台制作的游戏<br>点击下方链接进入游戏：<br><a href="${gameUrl}" target="_blank" class="game-link-btn">▶ 合成大西瓜-全职猎人版 ◀</a>`
+            },
+            {
+                title: "SDR2_Island.pkg",
+                img: "p3.jpg",
+                desc: `【个人作品】<br>课后自己的尝试：使用秒哒制作更复杂的游戏<br>点击下方链接进入游戏：<br><a href="${gameUrl2}" target="_blank" class="game-link-btn">▶ 超级弹丸论破2-爱岛篇 ◀</a>`
+            },
+            {
+                title: "Reverse:1999.exe",
+                img: "p4.jpg",
+                desc: `【个人作品】<br>课堂第三周任务：用不同平台制作相同的东西会有什么不同？<br>点击下方链接进入游戏：<br>秒哒：<br><a href="${gameUrl3}" target="_blank" class="game-link-btn">▶ 重返未来：1999-神秘学 ◀</a>
+                 <br>netlify：<br><a href="${gameUrl5}" target="_blank" class="game-link-btn">▶ 重返未来：1999-神秘学2.0 ◀</a>`
+
+            },
+            {
+                title: "数字经济Library.url",
+                img: "图书馆.png",
+                desc: `【外部链接】<br>课堂第六周任务：使用Trae制作的含后端的简单小程序<br>数字经济 Library<br>点击下方链接进入：<br><a href="https://signsign.mindock.ai/economylibrary" target="_blank" class="game-link-btn">▶ 数字经济Library ◀</a>`
+            },
+            {
+                title: "Super Gintama.exe",
+                img: "p5.jpg",
+                desc: `【个人作品】<br>使用Trae制作的游戏<br>点击下方链接进入游戏：<br><a href="${gameUrl4}" target="_blank" class="game-link-btn">▶ 超级银魂 · Super Gintama ◀</a>`
+            },
+            {
+                title: "Work_05.exe",
+                img: "",
+                desc: "【作品开发中】敬请期待..."
+            }
+        ];
+
+        function switchPage(pageNumber) {
+            if (window.setKaleidoscope) window.setKaleidoscope(pageNumber === 1);
+
+            const box = document.getElementById("transition-container");
+
+            box.innerHTML = "";
+            for (let y = 0; y < 20; y++) {
+                for (let x = 0; x < 20; x++) {
+                    const p = document.createElement("div");
+                    p.className = "pixel";
+                    p.style.width = "5vw";
+                    p.style.height = "5vh";
+                    p.style.left = x * 5 + "vw";
+                    p.style.top = y * 5 + "vh";
+                    p.style.animationDelay = ((x + y) * 0.02) + "s";
+                    box.appendChild(p);
+                }
+            }
+
+            setTimeout(() => {
+                document.querySelectorAll('.page').forEach(page => {
+                    page.classList.remove('active');
+                });
+                document.getElementById(`page-${pageNumber}`).classList.add('active');
+            }, 700);
+
+            setTimeout(() => {
+                box.innerHTML = "";
+            }, 1200);
+        }
+
+        function openDrawer(type, index) {
+            const data = (type === 'hobby') ? hobbiesData[index] : worksData[index];
+            const imgFrame = document.querySelector('.item-img-frame');
+            const imgElem = document.getElementById('modal-img');
+            let emojiElem = document.getElementById('modal-emoji');
+
+            document.getElementById('modal-title').innerText = data.title;
+            document.getElementById('modal-desc').innerHTML = data.desc;
+
+            if (emojiElem) emojiElem.remove();
+            imgElem.style.display = '';
+
+            if (data.img) {
+                imgElem.src = data.img;
+                imgFrame.style.display = 'flex';
+            } else if (data.emoji) {
+                emojiElem = document.createElement('div');
+                emojiElem.id = 'modal-emoji';
+                emojiElem.className = 'modal-emoji';
+                emojiElem.textContent = data.emoji;
+                imgFrame.appendChild(emojiElem);
+                imgElem.style.display = 'none';
+                imgFrame.style.display = 'flex';
+            } else {
+                imgFrame.style.display = 'none';
+            }
+
+            document.getElementById('detail-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('detail-modal').classList.remove('active');
+        }
+
+        document.getElementById('detail-modal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        /* ================= 附录弹窗 ================= */
+        function openAppendix() {
+            document.getElementById('appendix-overlay').classList.add('active');
+        }
+
+        function closeAppendix(e) {
+            if (e && e.target !== document.getElementById('appendix-overlay')) return;
+            document.getElementById('appendix-overlay').classList.remove('active');
+        }
+
+        /* ================= 文档在线预览 ================= */
+        function previewDoc(filename, type) {
+            const overlay = document.getElementById('doc-preview-overlay');
+            const titleEl = document.getElementById('doc-preview-title');
+            const bodyEl = document.getElementById('doc-preview-body');
+
+            titleEl.textContent = filename;
+            bodyEl.innerHTML = '<div class="doc-loading">♡ 文档加载中... ♡</div>';
+            overlay.classList.add('active');
+
+            if (type === 'md') {
+                fetch(filename)
+                    .then(res => res.text())
+                    .then(text => {
+                        const html = marked.parse(text);
+                        bodyEl.innerHTML = html;
+                    })
+                    .catch(err => {
+                        bodyEl.innerHTML = '<div class="doc-loading" style="color:#d64082;">文档加载失败：' + err.message + '</div>';
+                    });
+            } else if (type === 'docx') {
+                fetch(filename)
+                    .then(res => res.arrayBuffer())
+                    .then(arrayBuffer => mammoth.convertToHtml({ arrayBuffer: arrayBuffer }))
+                    .then(result => {
+                        bodyEl.innerHTML = result.value;
+                    })
+                    .catch(err => {
+                        bodyEl.innerHTML = '<div class="doc-loading" style="color:#d64082;">文档加载失败：' + err.message + '</div>';
+                    });
+            }
+        }
+
+        function closeDocPreview(e) {
+            if (e && e.target !== document.getElementById('doc-preview-overlay')) return;
+            document.getElementById('doc-preview-overlay').classList.remove('active');
+        }
+
+        /* ================= 水波纹互动背景（通用引擎） ================= */
+        // 共享底图，只加载一次
+        var rippleImg = null;
+        var rippleImgReady = false;
+        (function () {
+            rippleImg = new Image();
+            rippleImg.onload = function () { rippleImgReady = true; };
+            rippleImg.src = 'mei.png';
+        })();
+
+        function createRippleEngine(canvasId, pageId, clickExcludeSelector) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const pageEl = document.getElementById(pageId);
+            const SCALE = 0.33;
+            let W, H, fullW, fullH;
+            let srcData = null;
+            let wave1, wave2;
+            let outImgData = null;
+            let active = false;
+            let rafId = null;
+            let lastMX = -1, lastMY = -1;
+            let waveSources = [];
+
+            function resize() {
+                fullW = pageEl.clientWidth;
+                fullH = pageEl.clientHeight;
+                W = Math.max(2, Math.floor(fullW * SCALE));
+                H = Math.max(2, Math.floor(fullH * SCALE));
+                canvas.width = W;
+                canvas.height = H;
+                canvas.style.width = fullW + 'px';
+                canvas.style.height = fullH + 'px';
+                wave1 = new Float32Array(W * H);
+                wave2 = new Float32Array(W * H);
+                outImgData = ctx.createImageData(W, H);
+                drawBase();
+                initWaveSources();
+            }
+
+            function drawBase() {
+                if (!rippleImgReady) return;
+                const oc = document.createElement('canvas');
+                oc.width = W;
+                oc.height = H;
+                const octx = oc.getContext('2d');
+                octx.drawImage(rippleImg, 0, 0, W, H);
+                srcData = octx.getImageData(0, 0, W, H).data;
+            }
+
+            function toLocal(e) {
+                const rect = pageEl.getBoundingClientRect();
+                return [
+                    Math.floor((e.clientX - rect.left) * SCALE),
+                    Math.floor((e.clientY - rect.top) * SCALE)
+                ];
+            }
+
+            pageEl.addEventListener('mousemove', function (e) {
+                if (!active) return;
+                const [x, y] = toLocal(e);
+                if (x < 2 || x >= W - 2 || y < 2 || y >= H - 2) return;
+                if (lastMX >= 0) {
+                    const dx = x - lastMX;
+                    const dy = y - lastMY;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const steps = Math.max(1, Math.floor(dist / 3));
+                    for (let i = 1; i <= steps; i++) {
+                        const t = i / steps;
+                        const px = Math.floor(lastMX + dx * t);
+                        const py = Math.floor(lastMY + dy * t);
+                        disturb(px, py, 2, 220);
+                    }
+                } else {
+                    disturb(x, y, 2, 220);
+                }
+                lastMX = x;
+                lastMY = y;
+            });
+
+            pageEl.addEventListener('mouseleave', function () {
+                lastMX = -1; lastMY = -1;
+            });
+
+            pageEl.addEventListener('click', function (e) {
+                if (!active) return;
+                if (clickExcludeSelector && e.target.closest(clickExcludeSelector)) return;
+                const [x, y] = toLocal(e);
+                disturb(x, y, 5, 700);
+            });
+
+            function disturb(x, y, radius, strength) {
+                for (let dy = -radius; dy <= radius; dy++) {
+                    for (let dx = -radius; dx <= radius; dx++) {
+                        if (dx * dx + dy * dy <= radius * radius) {
+                            const nx = x + dx, ny = y + dy;
+                            if (nx >= 1 && nx < W - 1 && ny >= 1 && ny < H - 1) {
+                                wave1[ny * W + nx] = Math.min(255, wave1[ny * W + nx] + strength);
+                            }
+                        }
+                    }
+                }
+            }
+
+            function initWaveSources() {
+                waveSources = [];
+                const count = 4;
+                for (let i = 0; i < count; i++) {
+                    waveSources.push({
+                        x: Math.random() * (W - 10) + 5,
+                        y: Math.random() * (H - 10) + 5,
+                        angle: Math.random() * Math.PI * 2,
+                        speed: 0.25 + Math.random() * 0.4,
+                        strength: 70 + Math.random() * 50,
+                        phase: Math.random() * Math.PI * 2
+                    });
+                }
+            }
+
+            function updateWaveSources() {
+                for (const s of waveSources) {
+                    s.x += Math.cos(s.angle) * s.speed;
+                    s.y += Math.sin(s.angle) * s.speed;
+                    if (s.x < 3) { s.x = 3; s.angle = Math.PI - s.angle; }
+                    else if (s.x > W - 4) { s.x = W - 4; s.angle = Math.PI - s.angle; }
+                    if (s.y < 3) { s.y = 3; s.angle = -s.angle; }
+                    else if (s.y > H - 4) { s.y = H - 4; s.angle = -s.angle; }
+                    if ((Math.floor(s.phase += 0.3) % 2) === 0) {
+                        disturb(Math.floor(s.x), Math.floor(s.y), 1, s.strength);
+                    }
+                }
+            }
+
+            function update() {
+                const damping = 0.987;
+                for (let y = 1; y < H - 1; y++) {
+                    const row = y * W;
+                    for (let x = 1; x < W - 1; x++) {
+                        const i = row + x;
+                        wave2[i] = (wave1[i - 1] + wave1[i + 1] + wave1[i - W] + wave1[i + W]) * 0.25 * damping;
+                    }
+                }
+                const tmp = wave1; wave1 = wave2; wave2 = tmp;
+
+                if (srcData) {
+                    const od = outImgData.data;
+                    for (let y = 1; y < H - 1; y++) {
+                        const row = y * W;
+                        for (let x = 1; x < W - 1; x++) {
+                            const i = row + x;
+                            const di = i * 4;
+                            const wave = wave1[i];
+                            if (wave > 1) {
+                                const dx = (wave1[i - 1] - wave1[i + 1]) >> 3;
+                                const dy = (wave1[i - W] - wave1[i + W]) >> 3;
+                                let sx = x + dx;
+                                let sy = y + dy;
+                                if (sx < 0) sx = 0; else if (sx >= W) sx = W - 1;
+                                if (sy < 0) sy = 0; else if (sy >= H) sy = H - 1;
+                                const si = (sy * W + sx) * 4;
+                                od[di] = srcData[si];
+                                od[di + 1] = srcData[si + 1];
+                                od[di + 2] = srcData[si + 2];
+                                od[di + 3] = 255;
+                            } else {
+                                od[di] = srcData[di];
+                                od[di + 1] = srcData[di + 1];
+                                od[di + 2] = srcData[di + 2];
+                                od[di + 3] = 255;
+                            }
+                        }
+                    }
+                    ctx.putImageData(outImgData, 0, 0);
+                } else if (rippleImgReady) {
+                    drawBase(); // 图片就绪后补一次
+                }
+
+                updateWaveSources();
+
+                if (active) rafId = requestAnimationFrame(update);
+            }
+
+            function start() {
+                if (active) return;
+                active = true;
+                resize();
+                canvas.style.opacity = '1';
+                rafId = requestAnimationFrame(update);
+            }
+
+            function stop() {
+                active = false;
+                if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+                canvas.style.opacity = '0';
+                lastMX = -1; lastMY = -1;
+            }
+
+            const observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (m) {
+                    if (m.attributeName === 'class') {
+                        if (pageEl.classList.contains('active')) start();
+                        else stop();
+                    }
+                });
+            });
+            observer.observe(pageEl, { attributes: true });
+
+            window.addEventListener('resize', resize);
+            resize();
+            if (pageEl.classList.contains('active')) start();
+
+            return { start, stop, resize };
+        }
+
+        // 启动四个页面的水波纹引擎
+        createRippleEngine('ripple-canvas', 'page-2', '.nav-node, .back-btn');
+        createRippleEngine('ripple-canvas-5', 'page-5', '.about-window, .back-btn, .favorite-list-box, .about-body');
+        createRippleEngine('ripple-canvas-6', 'page-6', '.chest-container, .back-btn, .drawer-layer, .drawer-handle');
+        createRippleEngine('ripple-canvas-7', 'page-7', '.about-window, .back-btn, .appendix-box, .about-body');
+        createRippleEngine('ripple-canvas-8', 'page-8', '.about-window, .back-btn, .about-body');
+        createRippleEngine('ripple-canvas-9', 'page-9', '.about-window, .back-btn, .about-body');
+
+        /* ================= 3D 波浪网格空间引擎（page-3 & page-4 共用） ================= */
+        function createSpace3D(containerId, pageId) {
+            var container = document.getElementById(containerId);
+            var pageEl = document.getElementById(pageId);
+            var inited = false;
+            var scene, camera, renderer, walls = [];
+            var mouseX = 0, mouseY = 0, targetRX = 0, targetRY = 0, curRX = 0, curRY = 0;
+            var clock = new THREE.Clock();
+
+            function init() {
+                if (inited) return;
+                inited = true;
+
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0xffd6e8);
+
+                camera = new THREE.PerspectiveCamera(100, container.clientWidth / container.clientHeight, 0.1, 90);
+                camera.position.set(0, 0, 0);
+
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+                renderer.setSize(container.clientWidth, container.clientHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                container.appendChild(renderer.domElement);
+
+                var textureLoader = new THREE.TextureLoader();
+                textureLoader.load('背景.png', function (tex) {
+                    tex.wrapS = THREE.RepeatWrapping;
+                    tex.wrapT = THREE.RepeatWrapping;
+                    walls.forEach(function (w) {
+                        w.material.uniforms.uTexture.value = tex;
+                        w.material.needsUpdate = true;
+                    });
+                });
+
+                var vs = `
+                    uniform float uTime;
+                    uniform float uWaveAmp;
+                    uniform float uWaveFreq;
+                    varying vec2 vUv;
+                    varying vec3 vNormal;
+                    void main() {
+                        vUv = uv;
+                        vNormal = normal;
+                        vec3 pos = position;
+                        float w1 = sin(pos.x * uWaveFreq + uTime * 1.5) * cos(pos.y * uWaveFreq * 0.7 + uTime * 1.2);
+                        float w2 = sin(pos.y * uWaveFreq * 1.3 + uTime * 0.8) * cos(pos.z * uWaveFreq * 0.9 + uTime * 1.1);
+                        float w3 = sin(pos.z * uWaveFreq * 0.8 + uTime * 1.8) * cos(pos.x * uWaveFreq * 1.1 + uTime * 0.9);
+                        float d = (w1 + w2 + w3) * uWaveAmp;
+                        pos += normal * d;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                    }
+                `;
+                var fs = `
+                    uniform sampler2D uTexture;
+                    uniform float uTime;
+                    varying vec2 vUv;
+                    varying vec3 vNormal;
+                    void main() {
+                        vec4 c = texture2D(uTexture, vUv);
+                        vec3 ld = normalize(vec3(1.0, 1.0, 1.0));
+                        float diff = max(dot(normalize(vNormal), ld), 0.0);
+                        float br = 0.5 + diff * 0.5;
+                        float spec = pow(diff, 8.0) * 0.4;
+                        vec3 col = c.rgb * br + spec;
+                        float vig = 1.0 - length(vUv - 0.5) * 0.6;
+                        col *= vig;
+                        gl_FragColor = vec4(col, 1.0);
+                    }
+                `;
+
+                function mkMat() {
+                    return new THREE.ShaderMaterial({
+                        vertexShader: vs,
+                        fragmentShader: fs,
+                        uniforms: {
+                            uTime: { value: 0 },
+                            uWaveAmp: { value: 0.4 },
+                            uWaveFreq: { value: 1.5 },
+                            uTexture: { value: null }
+                        },
+                        side: THREE.DoubleSide
+                    });
+                }
+
+                var SIZE = 20, HALF = 6, SEG = 80;
+
+                var floor = new THREE.Mesh(new THREE.PlaneGeometry(SIZE, SIZE, SEG, SEG), mkMat());
+                floor.rotation.x = -Math.PI / 2; floor.position.y = -HALF;
+                walls.push(floor); scene.add(floor);
+
+                var ceil = new THREE.Mesh(new THREE.PlaneGeometry(SIZE, SIZE, SEG, SEG), mkMat());
+                ceil.rotation.x = Math.PI / 2; ceil.position.y = HALF;
+                walls.push(ceil); scene.add(ceil);
+
+                var front = new THREE.Mesh(new THREE.PlaneGeometry(SIZE, SIZE, SEG, SEG), mkMat());
+                front.position.z = -HALF;
+                walls.push(front); scene.add(front);
+
+                var back = new THREE.Mesh(new THREE.PlaneGeometry(SIZE, SIZE, SEG, SEG), mkMat());
+                back.position.z = HALF; back.rotation.y = Math.PI;
+                walls.push(back); scene.add(back);
+
+                var left = new THREE.Mesh(new THREE.PlaneGeometry(SIZE, SIZE, SEG, SEG), mkMat());
+                left.rotation.y = Math.PI / 2; left.position.x = -HALF;
+                walls.push(left); scene.add(left);
+
+                var right = new THREE.Mesh(new THREE.PlaneGeometry(SIZE, SIZE, SEG, SEG), mkMat());
+                right.rotation.y = -Math.PI / 2; right.position.x = HALF;
+                walls.push(right); scene.add(right);
+
+                document.addEventListener('mousemove', function (e) {
+                    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+                    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+                    targetRY = mouseX * 0.3;
+                    targetRX = mouseY * 0.15;
+                });
+
+                window.addEventListener('resize', function () {
+                    camera.aspect = container.clientWidth / container.clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(container.clientWidth, container.clientHeight);
+                });
+
+                animate();
+            }
+
+            function animate() {
+                requestAnimationFrame(animate);
+                var t = clock.getElapsedTime();
+                walls.forEach(function (w) {
+                    w.material.uniforms.uTime.value = t;
+                });
+                curRX += (targetRX - curRX) * 0.04;
+                curRY += (targetRY - curRY) * 0.04;
+                camera.rotation.x = curRX;
+                camera.rotation.y = curRY;
+                camera.position.x = Math.sin(t * 0.3) * 0.4;
+                camera.position.y = Math.cos(t * 0.2) * 0.25;
+                camera.position.z = Math.sin(t * 0.25) * 0.3;
+                renderer.render(scene, camera);
+            }
+
+            // 懒初始化：页面激活时才创建
+            var observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (m) {
+                    if (m.attributeName === 'class' && pageEl.classList.contains('active')) init();
+                });
+            });
+            observer.observe(pageEl, { attributes: true });
+            if (pageEl.classList.contains('active')) init();
+        }
+
+        createSpace3D('works-3d-container', 'page-4');
+        createSpace3D('proof-3d-container', 'page-3');
+
+        /* ================= 页面 4：书本 DOM 生成 ================= */
+        (function () {
+            var grid = document.getElementById('works-grid');
+            var books = [
+                { title: '合成大西瓜​HXH', img: 'p2.jpg', idx: 0 },
+                { title: 'SDR2​Island', img: 'p3.jpg', idx: 1 },
+                { title: 'Reverse：​1999', img: 'p4.jpg', idx: 2 },
+                { title: '数字经济​Library', img: '图书馆.png', idx: 3 },
+                { title: 'Gintama Game', img: 'p5.jpg', idx: 4 },
+                { title: 'Work_05', img: '', idx: 5 }
+            ];
+            books.forEach(function (b) {
+                var book = document.createElement('div');
+                book.className = 'work-book';
+                book.onclick = function () { openDrawer('work', b.idx); };
+
+                var spine = document.createElement('div');
+                spine.className = 'book-spine';
+                book.appendChild(spine);
+
+                var cover = document.createElement('div');
+                cover.className = 'book-cover';
+                if (b.img) {
+                    var img = document.createElement('img');
+                    img.src = b.img;
+                    img.alt = b.title;
+                    cover.appendChild(img);
+                } else if (b.emoji) {
+                    var em = document.createElement('div');
+                    em.className = 'book-placeholder book-emoji-cover';
+                    em.textContent = b.emoji;
+                    cover.appendChild(em);
+                } else {
+                    var ph = document.createElement('div');
+                    ph.className = 'book-placeholder';
+                    ph.textContent = '开发中...';
+                    cover.appendChild(ph);
+                }
+                book.appendChild(cover);
+
+                var title = document.createElement('div');
+                title.className = 'book-title';
+                title.textContent = b.title;
+                book.appendChild(title);
+
+                grid.appendChild(book);
+            });
+        })();
+
+        /* ================= ElevenLabs 狛枝凪斗音色朗读 ================= */
+        (function () {
+            const EI_KEY = 'sk_75a62d5074ca18ee9f8cba3f5adde84c0d5ba820dcbec964';
+            const EI_VOICE = 'iOvds81TRlfmPeNE39dR';
+            const EI_URL = 'https://api.elevenlabs.io/v1/text-to-speech/' + EI_VOICE;
+
+            let currentAudio = null;
+            let isSpeaking = false;
+            let stopFlag = false;
+            const blobCache = {};
+
+            // 中日韩英四语自我介绍（不显示在介绍栏，仅用于朗读）
+            const INTRO_LINES = [
+                '你好，我是YKY，欢迎来到我的星球',
+                'こんにちは、YKYです。私の星へようこそ',
+                '안녕하세요, YKY입니다. 제 행성에 오신 것을 환영합니다',
+                "Hi, I'm YKY. Welcome to my planet"
+            ];
+
+            async function synthesize(text) {
+                if (blobCache[text]) return blobCache[text];
+                const res = await fetch(EI_URL, {
+                    method: 'POST',
+                    headers: {
+                        'xi-api-key': EI_KEY,
+                        'Content-Type': 'application/json',
+                        'Accept': 'audio/mpeg'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        model_id: 'eleven_multilingual_v2',
+                        voice_settings: {
+                            stability: 0.42,
+                            similarity_boost: 0.85,
+                            style: 0.15,
+                            use_speaker_boost: true
+                        }
+                    })
+                });
+                if (!res.ok) throw new Error('TTS ' + res.status);
+                const blob = await res.blob();
+                blobCache[text] = blob;
+                return blob;
+            }
+
+            function stopSpeaking() {
+                stopFlag = true;
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio.currentTime = 0;
+                    currentAudio = null;
+                }
+                isSpeaking = false;
+            }
+
+            async function speakIntro() {
+                if (isSpeaking) { stopSpeaking(); return; }
+                isSpeaking = true;
+                stopFlag = false;
+                // 点击瞬间白光一闪
+                avatar.classList.remove('flash');
+                void avatar.offsetWidth; // 重置动画
+                avatar.classList.add('flash');
+                setTimeout(() => avatar.classList.remove('flash'), 500);
+                const lines = INTRO_LINES;
+                for (const line of lines) {
+                    if (stopFlag) break;
+                    try {
+                        const blob = await synthesize(line);
+                        if (stopFlag) break;
+                        const url = URL.createObjectURL(blob);
+                        currentAudio = new Audio(url);
+                        await new Promise((resolve) => {
+                            currentAudio.onended = resolve;
+                            currentAudio.onerror = resolve;
+                            currentAudio.play().catch(resolve);
+                        });
+                        URL.revokeObjectURL(url);
+                        currentAudio = null;
+                    } catch (e) {
+                        console.error('TTS failed:', e);
+                        break;
+                    }
+                }
+                isSpeaking = false;
+            }
+
+            const avatar = document.getElementById('p1-avatar');
+            if (avatar) avatar.addEventListener('click', speakIntro);
+        })();
+    </script>
+</body>
+
+</html>
