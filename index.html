@@ -734,6 +734,21 @@
             line-height: 1;
         }
 
+        .book-cover .book-solid-cover {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(10px, 1.6vw, 14px);
+            color: #fff;
+            text-align: center;
+            padding: 5px;
+            line-height: 1.4;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+            font-family: 'Press Start 2P', 'ZhengGeDianHei 16', monospace;
+        }
+
         .book-title {
             text-align: center;
             margin-top: 10px;
@@ -2868,6 +2883,36 @@
                 desc: `【个人作品】<br>使用Trae制作的游戏<br>点击下方链接进入游戏：<br><a href="${gameUrl4}" target="_blank" class="game-link-btn">▶ 超级银魂 · Super Gintama ◀</a>`
             },
             {
+                title: "MyIDCard.url",
+                img: "",
+                desc: `【外部链接】<br>个人 ID Card 网站<br>点击下方链接进入：<br><a href="https://signsignsign.github.io/mycardpage/" target="_blank" class="game-link-btn">▶ 个人IDcard网站 ◀</a>`
+            },
+            {
+                title: "MyPortfolio.url",
+                img: "",
+                desc: `【外部链接】<br>个人简易作品集网站<br>点击下方链接进入：<br><a href="https://personalworksssss.netlify.app" target="_blank" class="game-link-btn">▶ 个人简易作品集网站 ◀</a>`
+            },
+            {
+                title: "TodoList.url",
+                img: "",
+                desc: `【外部链接】<br>待办事项记录网站<br>点击下方链接进入：<br><a href="https://preworksss.netlify.app" target="_blank" class="game-link-btn">▶ 待办事项记录网站 ◀</a>`
+            },
+            {
+                title: "MarkDownNotes.url",
+                img: "",
+                desc: `【外部链接】<br>MarkDown 笔记本<br>点击下方链接进入：<br><a href="https://markdownnote1.netlify.app" target="_blank" class="game-link-btn">▶ MarkDown笔记本 ◀</a>`
+            },
+            {
+                title: "PomodoroTimer.url",
+                img: "",
+                desc: `【外部链接】<br>番茄钟<br>点击下方链接进入：<br><a href="https://signsignsign.github.io/pomodoro-timer/" target="_blank" class="game-link-btn">▶ 番茄钟 ◀</a>`
+            },
+            {
+                title: "WeatherForecast.url",
+                img: "",
+                desc: `【外部链接】<br>天气预报<br>点击下方链接进入：<br><a href="https://signsignsign.github.io/weather-app/" target="_blank" class="game-link-btn">▶ 天气预报 ◀</a>`
+            },
+            {
                 title: "Work_05.exe",
                 img: "",
                 desc: "【作品开发中】敬请期待..."
@@ -3379,7 +3424,13 @@
                 { title: 'Reverse：​1999', img: 'p4.jpg', idx: 2 },
                 { title: '数字经济​Library', img: '图书馆.png', idx: 3 },
                 { title: 'Gintama Game', img: 'p5.jpg', idx: 4 },
-                { title: 'Work_05', img: '', idx: 5 }
+                { title: 'My​ID​Card', color: '#b8d4f0', idx: 5 },
+                { title: 'My​Portfolio', color: '#d4b8e0', idx: 6 },
+                { title: 'Todo​List', color: '#b8e0c0', idx: 7 },
+                { title: 'MD​笔记本', color: '#f0d4b8', idx: 8 },
+                { title: '番茄钟', color: '#f0e0b8', idx: 9 },
+                { title: '天气预报', color: '#b8e0e8', idx: 10 },
+                { title: 'Work_05', img: '', idx: 11 }
             ];
             books.forEach(function (b) {
                 var book = document.createElement('div');
@@ -3397,6 +3448,12 @@
                     img.src = b.img;
                     img.alt = b.title;
                     cover.appendChild(img);
+                } else if (b.color) {
+                    cover.style.background = b.color;
+                    var solid = document.createElement('div');
+                    solid.className = 'book-placeholder book-solid-cover';
+                    solid.textContent = b.title;
+                    cover.appendChild(solid);
                 } else if (b.emoji) {
                     var em = document.createElement('div');
                     em.className = 'book-placeholder book-emoji-cover';
