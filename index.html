@@ -734,19 +734,9 @@
             line-height: 1;
         }
 
-        .book-cover .book-solid-cover {
+        .book-cover .book-color-cover {
             width: 100%;
             height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: clamp(10px, 1.6vw, 14px);
-            color: #fff;
-            text-align: center;
-            padding: 5px;
-            line-height: 1.4;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
-            font-family: 'Press Start 2P', 'ZhengGeDianHei 16', monospace;
         }
 
         .book-title {
@@ -1683,6 +1673,8 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="profile-view.css">
+    <link rel="stylesheet" href="works-3d.css">
 </head>
 
 <body>
@@ -1760,6 +1752,10 @@
                     <div class="avatar-img-wrapper">
                         <img src="p1.png" alt="Avatar" id="p1-avatar">
                     </div>
+                    <div class="avatar-actions">
+                        <button class="profile-action-btn" id="open-contact-panel" type="button">CONTACT</button>
+                        <button class="profile-action-btn" id="open-analytics-panel" type="button">VIEW</button>
+                    </div>
                 </div>
             </div>
 
@@ -1778,6 +1774,48 @@
                     ˚₊‧꒰ა𛰙᭜𖫴𖫰𖫱𖫳𖫲𖫲𖫳𖫴𖫰𖫱꛰ᩝ︪᭜𖫴𖫰𖫱𖫳𖫲𖫲𖫳𖫴𖫰𖫱꛰ᩝ𛰚໒꒱ ‧₊꙳
                 </div>
             </div>
+        </div>
+
+        <section class="contact-window" aria-labelledby="contact-title">
+            <div class="info-title-bar pink-title"><span id="contact-title">contact_info.exe - 联系方式</span><span
+                    class="info-title-mark">✦</span></div>
+            <div class="contact-body">
+                <div class="contact-row"><span class="contact-icon email-icon" aria-hidden="true">✉</span><span
+                        class="contact-text"><span class="contact-label">EMAIL</span><span
+                            class="contact-value">570310269@qq.com</span></span><button class="contact-copy-btn"
+                        type="button" data-copy="570310269@qq.com" aria-label="复制邮箱地址">COPY</button></div>
+                <div class="contact-row"><span class="contact-icon wechat-icon" aria-hidden="true">❋</span><span
+                        class="contact-text"><span class="contact-label">WECHAT</span><span
+                            class="contact-value">DKMIK_6682</span></span><button class="contact-copy-btn" type="button"
+                        data-copy="DKMIK_6682" aria-label="复制微信号">COPY</button></div>
+                <button class="wechat-qr-button open-qr-trigger" type="button"><span aria-hidden="true">▣</span> WECHAT
+                    QR / 打开微信二维码</button>
+            </div>
+        </section>
+
+        <div class="profile-info-grid">
+            <section class="info-window qr-mini-window" aria-labelledby="qr-title">
+                <div class="info-title-bar"><span id="qr-title">QR · 扫码分享</span><span class="info-title-mark">✦</span>
+                </div>
+                <button class="qr-preview-button open-qr-trigger" type="button" aria-label="打开微信二维码"><img
+                        src="wechat-qr.png" alt="微信二维码"><span class="qr-preview-copy">SCAN ME<br><small>OPEN
+                            QR</small></span></button>
+            </section>
+            <section class="info-window analytics-window" aria-labelledby="analytics-title">
+                <div class="info-title-bar analytics-title-bar"><span id="analytics-title">ANALYTICS · 访问统计</span><span
+                        class="info-title-mark">⌁</span></div>
+                <div class="analytics-body">
+                    <div class="analytics-grid">
+                        <div class="analytics-tile total-tile"><span>总访问</span><strong id="stat-total">0</strong></div>
+                        <div class="analytics-tile today-tile"><span>今日</span><strong id="stat-today">0</strong></div>
+                        <div class="analytics-tile wechat-tile"><span>微信</span><strong id="stat-wechat">0</strong></div>
+                        <div class="analytics-tile copy-tile"><span>复制</span><strong id="stat-copy">0</strong></div>
+                    </div>
+                    <div class="analytics-footer"><span class="analytics-live"><i class="live-dot"></i><span
+                                id="analytics-mode">CONNECTING</span></span><button class="analytics-sync"
+                            id="analytics-sync" type="button">SYNC</button></div>
+                </div>
+            </section>
         </div>
     </div>
 
@@ -1831,9 +1869,15 @@
         <div class="works-overlay">
             <div class="works-title">★ MY WORKS ★</div>
             <div class="works-grid" id="works-grid">
-                <!-- 5 本书由 JS 动态生成 -->
+                <!-- 3D 书页由 WebGL 动态生成 -->
             </div>
         </div>
+        <div class="view-wheel" id="works-view-wheel" role="slider" aria-label="拖拽旋转作品视角" aria-valuemin="0" aria-valuemax="360" aria-valuenow="0" tabindex="0">
+            <span class="wheel-ring"></span>
+            <span class="wheel-thumb"></span>
+            <span class="wheel-label">LOOK 360°</span>
+        </div>
+        <div class="works-toast" id="works-toast" role="status" aria-live="polite">待制作作品</div>
     </div>
 
     <!-- ================= 页面 5：个人简介与能力说明（复古电脑弹窗） ================= -->
@@ -2438,6 +2482,36 @@
     </div>
 
     <!-- ================= 动态万花筒引擎 ================= -->
+    <div class="profile-detail-overlay" id="profile-detail-overlay" role="dialog" aria-modal="true"
+        aria-labelledby="profile-detail-title">
+        <div class="profile-detail-window">
+            <div class="profile-detail-title-bar"><span id="profile-detail-title">contact_view.exe</span><button
+                    class="profile-detail-close" id="profile-detail-close" type="button" aria-label="关闭详情窗口">×</button>
+            </div>
+            <div class="profile-detail-body">
+                <div class="profile-detail-panel" id="contact-detail-panel">
+                    <div class="contact-detail-grid" id="contact-detail-content"></div>
+                </div>
+                <div class="profile-detail-panel" id="analytics-detail-panel">
+                    <div class="analytics-detail-content" id="analytics-detail-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="qr-modal-overlay" id="wechat-qr-modal" role="dialog" aria-modal="true"
+        aria-labelledby="wechat-qr-modal-title">
+        <div class="qr-modal-window">
+            <div class="qr-modal-title-bar"><span id="wechat-qr-modal-title">wechat_qr.exe</span><button
+                    class="qr-modal-close" id="wechat-qr-close" type="button" aria-label="关闭微信二维码">×</button></div>
+            <div class="qr-modal-body">
+                <div class="qr-modal-frame"><img src="wechat-qr.png" alt="YKY 的微信二维码"></div>
+                <div class="qr-modal-caption">微信扫码 · DKMIK_6682</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="profile-info.js"></script>
     <script>
         (function () {
             'use strict';
@@ -2815,7 +2889,7 @@
     </script>
 
     <!-- ================= 交互逻辑 Script ================= -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="three.min.js"></script>
     <!-- marked.js：Markdown 文档在线预览 -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- mammoth.js：Word (.docx) 文档转 HTML 在线预览 -->
@@ -2885,32 +2959,32 @@
             {
                 title: "MyIDCard.url",
                 img: "",
-                desc: `【外部链接】<br>个人 ID Card 网站<br>点击下方链接进入：<br><a href="https://signsignsign.github.io/mycardpage/" target="_blank" class="game-link-btn">▶ 个人IDcard网站 ◀</a>`
+                desc: `【个人作品】<br>个人 ID Card 网站<br>点击下方链接进入：<br><a href="https://signsignsign.github.io/mycardpage/" target="_blank" class="game-link-btn">▶ 个人IDcard网站 ◀</a>`
             },
             {
-                title: "MyPortfolio.url",
+                title: "Portfolio.url",
                 img: "",
-                desc: `【外部链接】<br>个人简易作品集网站<br>点击下方链接进入：<br><a href="https://personalworksssss.netlify.app" target="_blank" class="game-link-btn">▶ 个人简易作品集网站 ◀</a>`
+                desc: `【个人作品】<br>个人简易作品集网站<br>点击下方链接进入：<br><a href="https://personalworksssss.netlify.app" target="_blank" class="game-link-btn">▶ 个人简易作品集网站 ◀</a>`
             },
             {
                 title: "TodoList.url",
                 img: "",
-                desc: `【外部链接】<br>待办事项记录网站<br>点击下方链接进入：<br><a href="https://preworksss.netlify.app" target="_blank" class="game-link-btn">▶ 待办事项记录网站 ◀</a>`
+                desc: `【个人作品】<br>待办事项记录网站<br>点击下方链接进入：<br><a href="https://preworksss.netlify.app" target="_blank" class="game-link-btn">▶ 待办事项记录网站 ◀</a>`
             },
             {
                 title: "MarkDownNotes.url",
                 img: "",
-                desc: `【外部链接】<br>MarkDown 笔记本<br>点击下方链接进入：<br><a href="https://markdownnote1.netlify.app" target="_blank" class="game-link-btn">▶ MarkDown笔记本 ◀</a>`
+                desc: `【个人作品】<br>MarkDown 笔记本<br>点击下方链接进入：<br><a href="https://markdownnote1.netlify.app" target="_blank" class="game-link-btn">▶ MarkDown笔记本 ◀</a>`
             },
             {
                 title: "PomodoroTimer.url",
                 img: "",
-                desc: `【外部链接】<br>番茄钟<br>点击下方链接进入：<br><a href="https://signsignsign.github.io/pomodoro-timer/" target="_blank" class="game-link-btn">▶ 番茄钟 ◀</a>`
+                desc: `【个人作品】<br>番茄钟<br>点击下方链接进入：<br><a href="https://signsignsign.github.io/pomodoro-timer/" target="_blank" class="game-link-btn">▶ 番茄钟 ◀</a>`
             },
             {
                 title: "WeatherForecast.url",
                 img: "",
-                desc: `【外部链接】<br>天气预报<br>点击下方链接进入：<br><a href="https://signsignsign.github.io/weather-app/" target="_blank" class="game-link-btn">▶ 天气预报 ◀</a>`
+                desc: `【个人作品】<br>天气预报<br>点击下方链接进入：<br><a href="https://signsignsign.github.io/weather-app/" target="_blank" class="game-link-btn">▶ 天气预报 ◀</a>`
             },
             {
                 title: "Work_05.exe",
@@ -2918,6 +2992,8 @@
                 desc: "【作品开发中】敬请期待..."
             }
         ];
+
+        window.WORKS_DATA = worksData;
 
         function switchPage(pageNumber) {
             if (window.setKaleidoscope) window.setKaleidoscope(pageNumber === 1);
@@ -3261,12 +3337,19 @@
         createRippleEngine('ripple-canvas-9', 'page-9', '.about-window, .back-btn, .about-body');
 
         /* ================= 3D 波浪网格空间引擎（page-3 & page-4 共用） ================= */
-        function createSpace3D(containerId, pageId) {
+        function createSpace3D(containerId, pageId, options) {
             var container = document.getElementById(containerId);
             var pageEl = document.getElementById(pageId);
+            var fullOrbit = !!(options && options.fullOrbit);
             var inited = false;
+            var isActive = pageEl.classList.contains('active');
             var scene, camera, renderer, walls = [];
+            var orbitUpdate = null;
+            var lastOrbitTime = 0;
+            var lookYaw = 0, lookPitch = 0, targetYaw = 0, targetPitch = 0;
+            if (fullOrbit) lookPitch = targetPitch = 0.07;
             var mouseX = 0, mouseY = 0, targetRX = 0, targetRY = 0, curRX = 0, curRY = 0;
+            var wheel = null, wheelThumb = null;
             var clock = new THREE.Clock();
 
             function init() {
@@ -3276,12 +3359,15 @@
                 scene = new THREE.Scene();
                 scene.background = new THREE.Color(0xffd6e8);
 
-                camera = new THREE.PerspectiveCamera(100, container.clientWidth / container.clientHeight, 0.1, 90);
-                camera.position.set(0, 0, 0);
+                var initialFov = fullOrbit ? 49 : 100;
+                camera = new THREE.PerspectiveCamera(initialFov, container.clientWidth / container.clientHeight, 0.1, 90);
+                camera.position.set(0, fullOrbit ? 0.45 : 0, fullOrbit ? 12.6 : 0);
+                camera.rotation.order = 'YXZ';
 
                 renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
                 renderer.setSize(container.clientWidth, container.clientHeight);
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                renderer.domElement.style.touchAction = 'none';
                 container.appendChild(renderer.domElement);
 
                 var textureLoader = new THREE.TextureLoader();
@@ -3290,6 +3376,7 @@
                     tex.wrapT = THREE.RepeatWrapping;
                     walls.forEach(function (w) {
                         w.material.uniforms.uTexture.value = tex;
+                        w.material.uniforms.uTextureReady.value = 1;
                         w.material.needsUpdate = true;
                     });
                 });
@@ -3314,16 +3401,18 @@
                 `;
                 var fs = `
                     uniform sampler2D uTexture;
+                    uniform float uTextureReady;
                     uniform float uTime;
                     varying vec2 vUv;
                     varying vec3 vNormal;
                     void main() {
                         vec4 c = texture2D(uTexture, vUv);
+                        vec3 baseColor = mix(vec3(0.98, 0.76, 0.87), c.rgb, uTextureReady);
                         vec3 ld = normalize(vec3(1.0, 1.0, 1.0));
                         float diff = max(dot(normalize(vNormal), ld), 0.0);
                         float br = 0.5 + diff * 0.5;
                         float spec = pow(diff, 8.0) * 0.4;
-                        vec3 col = c.rgb * br + spec;
+                        vec3 col = baseColor * br + spec;
                         float vig = 1.0 - length(vUv - 0.5) * 0.6;
                         col *= vig;
                         gl_FragColor = vec4(col, 1.0);
@@ -3338,13 +3427,16 @@
                             uTime: { value: 0 },
                             uWaveAmp: { value: 0.4 },
                             uWaveFreq: { value: 1.5 },
-                            uTexture: { value: null }
+                            uTexture: { value: null },
+                            uTextureReady: { value: 0 }
                         },
                         side: THREE.DoubleSide
                     });
                 }
 
-                var SIZE = 20, HALF = 6, SEG = 80;
+                var SIZE = fullOrbit ? 36 : 20;
+                var HALF = fullOrbit ? 14 : 6;
+                var SEG = 80;
 
                 var floor = new THREE.Mesh(new THREE.PlaneGeometry(SIZE, SIZE, SEG, SEG), mkMat());
                 floor.rotation.x = -Math.PI / 2; floor.position.y = -HALF;
@@ -3371,40 +3463,135 @@
                 walls.push(right); scene.add(right);
 
                 document.addEventListener('mousemove', function (e) {
+                    if (fullOrbit) return;
                     mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
                     mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
                     targetRY = mouseX * 0.3;
                     targetRX = mouseY * 0.15;
                 });
 
+                if (fullOrbit) {
+                    wheel = document.getElementById('works-view-wheel');
+                    wheelThumb = wheel ? wheel.querySelector('.wheel-thumb') : null;
+                    var dragging = false;
+                    var lastX = 0, lastY = 0;
+                    if (wheel) {
+                        wheel.addEventListener('pointerdown', function (event) {
+                            dragging = true;
+                            lastX = event.clientX;
+                            lastY = event.clientY;
+                            wheel.classList.add('dragging');
+                            wheel.setPointerCapture(event.pointerId);
+                            event.preventDefault();
+                            event.stopPropagation();
+                        });
+                        wheel.addEventListener('pointermove', function (event) {
+                            if (!dragging) return;
+                            var dx = event.clientX - lastX;
+                            var dy = event.clientY - lastY;
+                            lastX = event.clientX;
+                            lastY = event.clientY;
+                            targetYaw -= dx * 0.009;
+                            targetPitch = Math.max(-0.52, Math.min(0.58, targetPitch - dy * 0.0045));
+                            event.preventDefault();
+                            event.stopPropagation();
+                        });
+                        var stopDrag = function (event) {
+                            dragging = false;
+                            wheel.classList.remove('dragging');
+                            if (event && event.pointerId !== undefined && wheel.hasPointerCapture(event.pointerId)) wheel.releasePointerCapture(event.pointerId);
+                        };
+                        wheel.addEventListener('pointerup', stopDrag);
+                        wheel.addEventListener('pointercancel', stopDrag);
+                        wheel.addEventListener('keydown', function (event) {
+                            var step = 0.14;
+                            if (event.key === 'ArrowLeft') targetYaw += step;
+                            else if (event.key === 'ArrowRight') targetYaw -= step;
+                            else if (event.key === 'ArrowUp') targetPitch = Math.min(0.58, targetPitch + step * 0.45);
+                            else if (event.key === 'ArrowDown') targetPitch = Math.max(-0.52, targetPitch - step * 0.45);
+                            else return;
+                            event.preventDefault();
+                        });
+                    }
+
+                    if (typeof window.createFlyingWorksScene === 'function') {
+                        orbitUpdate = window.createFlyingWorksScene({
+                            scene: scene,
+                            camera: camera,
+                            renderer: renderer,
+                            container: container
+                        });
+                    }
+                }
+
                 window.addEventListener('resize', function () {
-                    camera.aspect = container.clientWidth / container.clientHeight;
-                    camera.updateProjectionMatrix();
-                    renderer.setSize(container.clientWidth, container.clientHeight);
+                    resizeView();
                 });
 
+                resizeView();
                 animate();
+            }
+
+            function resizeView() {
+                if (!camera || !renderer || !container.clientWidth || !container.clientHeight) return;
+                var aspect = container.clientWidth / container.clientHeight;
+                camera.aspect = aspect;
+                if (fullOrbit) {
+                    camera.fov = aspect < 0.72 ? 74 : (aspect < 0.98 ? 66 : (aspect < 1.3 ? 56 : 49));
+                } else {
+                    camera.fov = 100;
+                }
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
             }
 
             function animate() {
                 requestAnimationFrame(animate);
+                if (!isActive) return;
                 var t = clock.getElapsedTime();
+                var dt = Math.min(t - lastOrbitTime, 0.05);
+                lastOrbitTime = t;
                 walls.forEach(function (w) {
                     w.material.uniforms.uTime.value = t;
                 });
-                curRX += (targetRX - curRX) * 0.04;
-                curRY += (targetRY - curRY) * 0.04;
-                camera.rotation.x = curRX;
-                camera.rotation.y = curRY;
-                camera.position.x = Math.sin(t * 0.3) * 0.4;
-                camera.position.y = Math.cos(t * 0.2) * 0.25;
-                camera.position.z = Math.sin(t * 0.25) * 0.3;
+                if (fullOrbit) {
+                    lookYaw += (targetYaw - lookYaw) * 0.09;
+                    lookPitch += (targetPitch - lookPitch) * 0.09;
+                    var cosPitch = Math.cos(lookPitch);
+                    var orbitDistance = 12.6;
+                    camera.position.set(
+                        Math.sin(lookYaw) * cosPitch * orbitDistance,
+                        0.45 + Math.sin(lookPitch) * orbitDistance,
+                        Math.cos(lookYaw) * cosPitch * orbitDistance
+                    );
+                    camera.lookAt(0, 0, 0);
+                    if (wheelThumb) {
+                        var thumbX = Math.sin(lookYaw) * 31;
+                        var thumbY = -(lookPitch / 0.58) * 31;
+                        wheelThumb.style.transform = 'translate(' + thumbX.toFixed(1) + 'px,' + thumbY.toFixed(1) + 'px)';
+                    }
+                    if (wheel) {
+                        var degrees = ((lookYaw * 180 / Math.PI) % 360 + 360) % 360;
+                        wheel.setAttribute('aria-valuenow', Math.round(degrees));
+                        wheel.setAttribute('aria-valuetext', Math.round(degrees) + '°');
+                    }
+                } else {
+                    curRX += (targetRX - curRX) * 0.04;
+                    curRY += (targetRY - curRY) * 0.04;
+                    camera.rotation.x = curRX;
+                    camera.rotation.y = curRY;
+                    camera.position.x = Math.sin(t * 0.3) * 0.4;
+                    camera.position.y = Math.cos(t * 0.2) * 0.25;
+                    camera.position.z = Math.sin(t * 0.25) * 0.3;
+                }
+                if (orbitUpdate) orbitUpdate(t, dt);
                 renderer.render(scene, camera);
             }
 
             // 懒初始化：页面激活时才创建
             var observer = new MutationObserver(function (mutations) {
                 mutations.forEach(function (m) {
+                    if (m.attributeName === 'class') isActive = pageEl.classList.contains('active');
                     if (m.attributeName === 'class' && pageEl.classList.contains('active')) init();
                 });
             });
@@ -3412,69 +3599,8 @@
             if (pageEl.classList.contains('active')) init();
         }
 
-        createSpace3D('works-3d-container', 'page-4');
+        createSpace3D('works-3d-container', 'page-4', { fullOrbit: true });
         createSpace3D('proof-3d-container', 'page-3');
-
-        /* ================= 页面 4：书本 DOM 生成 ================= */
-        (function () {
-            var grid = document.getElementById('works-grid');
-            var books = [
-                { title: '合成大西瓜​HXH', img: 'p2.jpg', idx: 0 },
-                { title: 'SDR2​Island', img: 'p3.jpg', idx: 1 },
-                { title: 'Reverse：​1999', img: 'p4.jpg', idx: 2 },
-                { title: '数字经济​Library', img: '图书馆.png', idx: 3 },
-                { title: 'Gintama Game', img: 'p5.jpg', idx: 4 },
-                { title: 'My​ID​Card', color: '#b8d4f0', idx: 5 },
-                { title: 'My​Portfolio', color: '#d4b8e0', idx: 6 },
-                { title: 'Todo​List', color: '#b8e0c0', idx: 7 },
-                { title: 'MD​笔记本', color: '#f0d4b8', idx: 8 },
-                { title: '番茄钟', color: '#f0e0b8', idx: 9 },
-                { title: '天气预报', color: '#b8e0e8', idx: 10 },
-                { title: 'Work_05', img: '', idx: 11 }
-            ];
-            books.forEach(function (b) {
-                var book = document.createElement('div');
-                book.className = 'work-book';
-                book.onclick = function () { openDrawer('work', b.idx); };
-
-                var spine = document.createElement('div');
-                spine.className = 'book-spine';
-                book.appendChild(spine);
-
-                var cover = document.createElement('div');
-                cover.className = 'book-cover';
-                if (b.img) {
-                    var img = document.createElement('img');
-                    img.src = b.img;
-                    img.alt = b.title;
-                    cover.appendChild(img);
-                } else if (b.color) {
-                    cover.style.background = b.color;
-                    var solid = document.createElement('div');
-                    solid.className = 'book-placeholder book-solid-cover';
-                    solid.textContent = b.title;
-                    cover.appendChild(solid);
-                } else if (b.emoji) {
-                    var em = document.createElement('div');
-                    em.className = 'book-placeholder book-emoji-cover';
-                    em.textContent = b.emoji;
-                    cover.appendChild(em);
-                } else {
-                    var ph = document.createElement('div');
-                    ph.className = 'book-placeholder';
-                    ph.textContent = '开发中...';
-                    cover.appendChild(ph);
-                }
-                book.appendChild(cover);
-
-                var title = document.createElement('div');
-                title.className = 'book-title';
-                title.textContent = b.title;
-                book.appendChild(title);
-
-                grid.appendChild(book);
-            });
-        })();
 
         /* ================= ElevenLabs 狛枝凪斗音色朗读 ================= */
         (function () {
@@ -3567,6 +3693,7 @@
             if (avatar) avatar.addEventListener('click', speakIntro);
         })();
     </script>
+    <script src="works-flyer.js"></script>
 </body>
 
 </html>
